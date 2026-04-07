@@ -133,6 +133,7 @@ Seller analytics dashboard
 Notification system
 Multi-currency support
 Performance optimization (caching)
+OAuth
 
 👨‍💻 Author
 Mohamed Ahmed El-Oraby
