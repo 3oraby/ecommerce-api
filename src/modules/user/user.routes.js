@@ -9,9 +9,11 @@ const {
 
 const router = express.Router();
 
-// add authinticate 
-// add restrict to 
+// add authinticate
+// add restrict to
 router.get("/me", userController.getMe);
+router.patch("/me", userController.updateMe);
+router.delete("/me", userController.deleteMe);
 
 router
   .route("/")

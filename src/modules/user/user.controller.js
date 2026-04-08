@@ -1,104 +1,89 @@
 const userService = require("./user.service");
-const AppError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus");
+const asyncHandler = require("../../utils/asyncHandler");
+const sendResponse = require("../../utils/sendResponse");
 
-class UserController {
-  async createUser(req, res, next) {
-    try {
-      const user = await userService.createUser(req.body);
+// --- ADMIN ONLY ---
+exports.createUser = asyncHandler(async (req, res) => {
+  const user = await userService.createUser(req.body);
 
-      // Exclude password from response
-      const userResponse = user.toJSON();
-      delete userResponse.password;
+  sendResponse({
+    res,
+    statusCode: HttpStatus.Created,
+    message: "User created successfully",
+    data: { user },
+  });
+});
 
-      res.status(HttpStatus.Created).json({
-        status: "success",
-        data: { user: userResponse },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+exports.getAllUsers = asyncHandler(async (req, res) => {
+  const users = await userService.getAllUsers();
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    data: { users },
+    results: users.length,
+  });
+});
 
-  async getAllUsers(req, res, next) {
-    try {
-      const users = await userService.getAllUsers();
-      res.status(HttpStatus.OK).json({
-        status: "success",
-        results: users.length,
-        data: { users },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+exports.getUserById = asyncHandler(async (req, res) => {
+  const user = await userService.getUserById(req.params.id);
 
-  async getUserById(req, res, next) {
-    try {
-      const user = await userService.getUserById(req.params.id);
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    data: { user },
+  });
+});
 
-      const userResponse = user.toJSON();
-      delete userResponse.password;
+exports.updateUser = asyncHandler(async (req, res) => {
+  const user = await userService.updateUser(req.params.id, req.body);
 
-      res.status(HttpStatus.OK).json({
-        status: "success",
-        data: { user: userResponse },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "User updated successfully",
+    data: { user },
+  });
+});
 
-  async getMe(req, res, next) {
-    try {
-      const userId = req.user ? req.user.id : null;
-      if (!userId) {
-        throw new AppError(
-          "Authentication required to get user details",
-          HttpStatus.Unauthorized,
-        );
-      }
-      const user = await userService.getCurrentUser(userId);
+exports.deleteUser = asyncHandler(async (req, res) => {
+  await userService.deleteUser(req.params.id);
 
-      const userResponse = user.toJSON();
-      delete userResponse.password;
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "User deleted successfully",
+  });
+});
 
-      res.status(HttpStatus.OK).json({
-        status: "success",
-        data: { user: userResponse },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+// --- ANY USER ---
+exports.getMe = asyncHandler(async (req, res) => {
+  const user = await userService.getCurrentUser(req.user.id);
 
-  async updateUser(req, res, next) {
-    try {
-      const user = await userService.updateUser(req.params.id, req.body);
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    data: { user },
+  });
+});
 
-      const userResponse = user.toJSON();
-      delete userResponse.password;
+exports.updateMe = asyncHandler(async (req, res) => {
+  const user = await userService.updateUser(req.user.id, req.body);
 
-      res.status(HttpStatus.OK).json({
-        status: "success",
-        data: { user: userResponse },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Your profile updated successfully",
+    data: { user },
+  });
+});
 
-  async deleteUser(req, res, next) {
-    try {
-      await userService.deleteUser(req.params.id);
-      res.status(HttpStatus.NoContent).json({
-        status: "success",
-        data: null,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-}
+exports.deleteMe = asyncHandler(async (req, res) => {
+  await userService.deleteUser(req.user.id);
 
-module.exports = new UserController();
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Your profile deleted successfully",
+  });
+});

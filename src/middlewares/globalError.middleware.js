@@ -1,4 +1,5 @@
 const HttpStatus = require("../enums/httpStatus");
+const ApiError = require("../utils/apiError");
 
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -24,6 +25,11 @@ const sendErrorProd = (err, res) => {
   }
 };
 
+const handleTableNotFound = (err) => {
+  const message = `Resource not found`;
+  return new ApiError(message, HttpStatus.NotFound);
+};
+
 const globalErrorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || HttpStatus.InternalServerError;
   err.status = err.status || "Error";
@@ -32,7 +38,10 @@ const globalErrorHandler = (err, req, res, next) => {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === "production") {
     let error = Object.create(err);
-    console.log(error);
+
+    if (error.parent && error.parent.errno === 1146)
+      error = handleTableNotFound(error);
+
     sendErrorProd(error, res);
   } else {
     console.log(
