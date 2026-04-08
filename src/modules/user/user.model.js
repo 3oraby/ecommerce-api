@@ -48,6 +48,10 @@ const User = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    password_changed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "users",
@@ -67,13 +71,27 @@ const User = sequelize.define(
         if (user.changed("password") && user.password) {
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(user.password, salt);
+
+          user.password_changed_at = new Date(Date.now() - 1000);
         }
       },
     },
+
     defaultScope: {
       attributes: { exclude: ["password"] },
     },
   },
 );
+
+User.prototype.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.password_changed_at) {
+    const changedTimestamp = parseInt(
+      this.password_changed_at.getTime() / 1000,
+      10,
+    );
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
+};
 
 module.exports = User;

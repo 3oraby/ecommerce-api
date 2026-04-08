@@ -6,10 +6,12 @@ const {
   updateUserSchema,
   userIdParamsSchema,
 } = require("./user.validation");
+const { authenticate } = require("../../middlewares/authenticate.middleware");
 
 const router = express.Router();
 
-// add authinticate
+router.use(authenticate);
+
 // add restrict to
 router.get("/me", userController.getMe);
 router.patch("/me", userController.updateMe);
