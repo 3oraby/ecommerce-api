@@ -1,7 +1,8 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../config/sequelize");
 const bcrypt = require("bcrypt");
-const Roles = require("../../enums/roles");
+const Roles = require("../../enums/roles.enum");
+const AccountStatus = require("../../enums/accountStatus.enum");
 
 const User = sequelize.define(
   "User",
@@ -40,17 +41,18 @@ const User = sequelize.define(
       type: DataTypes.ENUM(Roles.ADMIN, Roles.CUSTOMER, Roles.SELLER),
       defaultValue: Roles.CUSTOMER,
     },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-    is_verified: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
     password_changed_at: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    account_status: {
+      type: DataTypes.ENUM(
+        AccountStatus.ACTIVE,
+        AccountStatus.UNVERIFIED,
+        AccountStatus.SUSPENDED,
+        AccountStatus.INACTIVE,
+      ),
+      defaultValue: AccountStatus.UNVERIFIED,
     },
   },
   {

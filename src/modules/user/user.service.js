@@ -1,6 +1,6 @@
 const userRepository = require("./user.repository");
 const ApiError = require("../../utils/apiError");
-const HttpStatus = require("../../enums/httpStatus");
+const HttpStatus = require("../../enums/httpStatus.enum");
 
 class UserService {
   async createUser(userData) {

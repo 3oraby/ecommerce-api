@@ -1,5 +1,5 @@
 const { z } = require("zod");
-const Roles = require("../../enums/roles");
+const Roles = require("../../enums/roles.enum");
 
 exports.createUserSchema = z.object({
   body: z.object({

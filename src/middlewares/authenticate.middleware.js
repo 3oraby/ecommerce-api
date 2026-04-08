@@ -1,6 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/apiError");
-const HttpStatus = require("../enums/httpStatus");
+const HttpStatus = require("../enums/httpStatus.enum");
 const jwt = require("jsonwebtoken");
 const User = require("../modules/user/user.model");
 

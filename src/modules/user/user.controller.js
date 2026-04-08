@@ -1,5 +1,5 @@
 const userService = require("./user.service");
-const HttpStatus = require("../../enums/httpStatus");
+const HttpStatus = require("../../enums/httpStatus.enum");
 const asyncHandler = require("../../utils/asyncHandler");
 const sendResponse = require("../../utils/sendResponse");
 

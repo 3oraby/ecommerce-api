@@ -1,6 +1,5 @@
 const express = require("express");
 const app = express();
-const ApiError = require("./utils/apiError");
 const globalErrorHandler = require("./middlewares/globalError.middleware");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
@@ -11,8 +10,8 @@ const cookieParser = require("cookie-parser");
 const compression = require("compression");
 const cors = require("cors");
 const path = require("path");
-const HttpStatus = require("./enums/httpStatus");
 
+const urlNotFoundMiddleware = require("./middlewares/urlNotFound.middleware");
 const userRouter = require("./modules/user/user.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
@@ -71,14 +70,7 @@ app.use("/api/v1/users", userRouter);
 // ERROR HANDLING
 
 // Catch all unhandled routes
-app.all(/.*/, (req, res, next) => {
-  next(
-    new ApiError(
-      `Cannot find ${req.originalUrl} on this server!`,
-      HttpStatus.NotFound,
-    ),
-  );
-});
+app.all(/.*/, urlNotFoundMiddleware);
 
 // Global error handler
 app.use(globalErrorHandler);
