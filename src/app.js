@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
-const AppError = require("./utils/appError");
-const globalErrorHandler = require("./middlewares/globalErrorHandler");
+const ApiError = require("./utils/apiError");
+const globalErrorHandler = require("./middlewares/globalError.middleware");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
@@ -67,13 +67,16 @@ app.use(compression());
 app.use(express.static(path.join(__dirname, "public")));
 
 // ROUTES
+const userRouter = require("./modules/user/user.routes");
+
+app.use("/api/users", userRouter);
 
 // ERROR HANDLING
 
 // Catch all unhandled routes
 app.all(/.*/, (req, res, next) => {
   next(
-    new AppError(
+    new ApiError(
       `Cannot find ${req.originalUrl} on this server!`,
       HttpStatus.NotFound,
     ),
