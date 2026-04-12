@@ -1,79 +1,106 @@
-"use strict";
+const { DataTypes } = require("sequelize");
+const sequelize = require("../../config/sequelize");
+const Roles = require("../../enums/roles.enum");
+const AccountStatus = require("../../enums/accountStatus.enum");
+const { hashPassword } = require("../../utils/password.util");
 
-/** @type {import('sequelize-cli').Migration} */
-module.exports = {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("users", {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
+const User = sequelize.define(
+  "User",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    birth_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    profile_image: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    role: {
+      type: DataTypes.ENUM(Roles.ADMIN, Roles.CUSTOMER, Roles.SELLER),
+      defaultValue: Roles.CUSTOMER,
+    },
+    password_changed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    account_status: {
+      type: DataTypes.ENUM(
+        AccountStatus.ACTIVE,
+        AccountStatus.UNVERIFIED,
+        AccountStatus.SUSPENDED,
+        AccountStatus.INACTIVE,
+      ),
+      defaultValue: AccountStatus.UNVERIFIED,
+    },
+    otp: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
 
-      name: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-
-      password: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-
-      phone: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-
-      birth_date: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
-
-      profile_image: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-
-      role: {
-        type: Sequelize.ENUM("ADMIN", "CUSTOMER", "SELLER"),
-        defaultValue: "CUSTOMER",
-      },
-
-      password_changed_at: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
-
-      account_status: {
-        type: Sequelize.ENUM("ACTIVE", "UNVERIFIED", "SUSPENDED", "INACTIVE"),
-        defaultValue: "UNVERIFIED",
-      },
-
-      created_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-      },
-
-      updated_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-      },
-
-      deleted_at: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
-    });
+    otp_expires_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
+  {
+    tableName: "users",
+    timestamps: true,
+    paranoid: true,
+    deletedAt: "deleted_at",
+    createdAt: "created_at",
+    updatedAt: "updated_at",
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          user.password = await hashPassword(user.password);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed("password") && user.password) {
+          user.password = await hashPassword(user.password);
 
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("users");
+          user.password_changed_at = new Date(Date.now() - 1000);
+        }
+      },
+    },
+
+    // defaultScope: {
+    //   attributes: { exclude: ["password"] },
+    // },
   },
+);
+
+User.prototype.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.password_changed_at) {
+    const changedTimestamp = parseInt(
+      this.password_changed_at.getTime() / 1000,
+      10,
+    );
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
 };
+
+module.exports = User;
