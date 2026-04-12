@@ -1,5 +1,6 @@
 const ApiError = require("../utils/apiError");
 const { fromZodError } = require("zod-validation-error"); // for nicer messages
+const HttpStatus = require("../enums/httpStatus.enum");
 
 const validate = (schema) => (req, res, next) => {
   try {
@@ -11,7 +12,7 @@ const validate = (schema) => (req, res, next) => {
     next();
   } catch (err) {
     const error = fromZodError(err);
-    return ApiError(error.message, HttpStatus.BadRequest);
+    return next(new ApiError(error.message, HttpStatus.BadRequest));
   }
 };
 

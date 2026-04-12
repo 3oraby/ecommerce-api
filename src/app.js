@@ -13,6 +13,7 @@ const path = require("path");
 
 const urlNotFoundMiddleware = require("./middlewares/urlNotFound.middleware");
 const userRouter = require("./modules/user/user.routes");
+const authRouter = require("./modules/auth/auth.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
 // app.set("trust proxy", true);
@@ -42,10 +43,10 @@ const userRouter = require("./modules/user/user.routes");
 // });
 // app.use("/api", limiter);
 
-// // Body parsers
-// app.use(express.json({ limit: "10kb" }));
-// app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-// app.use(cookieParser());
+// Body parsers
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(cookieParser());
 
 // // Data sanitization against XSS
 // app.use(xss());
@@ -57,8 +58,8 @@ const userRouter = require("./modules/user/user.routes");
 //   }),
 // );
 
-// // Compress responses
-// app.use(compression());
+// Compress responses
+app.use(compression());
 
 // Serve static files
 // app.use(express.static(path.join(__dirname, "public")));
@@ -66,6 +67,7 @@ const userRouter = require("./modules/user/user.routes");
 // ROUTES
 
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/auth", authRouter);
 
 // ERROR HANDLING
 

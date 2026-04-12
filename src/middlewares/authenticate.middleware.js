@@ -1,8 +1,8 @@
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/apiError");
 const HttpStatus = require("../enums/httpStatus.enum");
-const jwt = require("jsonwebtoken");
 const User = require("../modules/user/user.model");
+const { verifyAccessToken } = require("../modules/auth/token.util");
 
 const extractTokenFromRequest = (req) => {
   let token;
@@ -13,28 +13,6 @@ const extractTokenFromRequest = (req) => {
     token = req.headers.authorization.split(" ")[1];
   }
   return token;
-};
-
-const verifyAccessToken = (token) => {
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET);
-  } catch (err) {
-    if (err.name === "JsonWebTokenError") {
-      throw new ApiError(
-        "Invalid token. Please log in again.",
-        HttpStatus.Unauthorized,
-      );
-    }
-
-    if (err.name === "TokenExpiredError") {
-      throw new ApiError(
-        "Your token has expired. Please log in again.",
-        HttpStatus.Unauthorized,
-      );
-    }
-
-    throw err;
-  }
 };
 
 exports.authenticate = asyncHandler(async (req, res, next) => {
