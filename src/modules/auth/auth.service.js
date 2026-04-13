@@ -1,7 +1,10 @@
 const authRepository = require("./auth.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
-const { generateAccessToken, generateRefreshToken } = require("./token.util");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("./token.service");
 const { comparePassword } = require("../../utils/password.util");
 const AccountStatus = require("../../enums/accountStatus.enum");
 
@@ -18,7 +21,7 @@ const sendVerificationEmail = async (user) => {
   console.log(`OTP for ${user.email}: ${otp}`);
 };
 
-exports.signupService = async (req, res) => {
+exports.signupService = async (req) => {
   const { name, email, password, role } = req.body;
 
   // check if user already exists
@@ -34,7 +37,7 @@ exports.signupService = async (req, res) => {
   return { user };
 };
 
-exports.loginService = async (req, res) => {
+exports.loginService = async (req) => {
   const { email, password } = req.body;
 
   // check if user exists
@@ -62,10 +65,12 @@ exports.loginService = async (req, res) => {
   // generate tokens
   const accessToken = generateAccessToken(user.id);
 
-  return { user, accessToken };
+  const refreshToken = generateRefreshToken(user, req);
+
+  return { user, accessToken, refreshToken };
 };
 
-exports.verifyEmailService = async (req, res) => {
+exports.verifyEmailService = async (req) => {
   const { email, otp } = req.body;
 
   // check if user exists
@@ -93,5 +98,7 @@ exports.verifyEmailService = async (req, res) => {
   // generate tokens
   const accessToken = generateAccessToken(user.id);
 
-  return { user, accessToken };
+  const refreshToken = generateRefreshToken(user, req);
+
+  return { user, accessToken, refreshToken };
 };

@@ -2,7 +2,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/apiError");
 const HttpStatus = require("../enums/httpStatus.enum");
 const User = require("../modules/user/user.model");
-const { verifyAccessToken } = require("../modules/auth/token.util");
+const { verifyAccessToken } = require("../modules/auth/token.service");
 
 const extractTokenFromRequest = (req) => {
   let token;

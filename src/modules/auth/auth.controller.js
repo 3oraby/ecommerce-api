@@ -2,9 +2,10 @@ const asyncHandler = require("../../utils/asyncHandler");
 const authService = require("./auth.service");
 const sendResponse = require("../../utils/sendResponse");
 const HttpStatus = require("../../enums/httpStatus.enum");
+const { sendCookies } = require("./cookie.service");
 
 exports.signup = asyncHandler(async (req, res, next) => {
-  const user = await authService.signupService(req, res, next);
+  const user = await authService.signupService(req);
 
   sendResponse({
     res,
@@ -15,7 +16,10 @@ exports.signup = asyncHandler(async (req, res, next) => {
 });
 
 exports.login = asyncHandler(async (req, res, next) => {
-  const { user, accessToken } = await authService.loginService(req, res, next);
+  const { user, accessToken, refreshToken } =
+    await authService.loginService(req);
+
+  sendCookies(res, refreshToken);
 
   sendResponse({
     res,
@@ -27,8 +31,10 @@ exports.login = asyncHandler(async (req, res, next) => {
 });
 
 exports.verifyEmail = asyncHandler(async (req, res, next) => {
-  const result = await authService.verifyEmailService(req, res, next);
-  const { user, accessToken } = result;
+  const result = await authService.verifyEmailService(req);
+  const { user, accessToken, refreshToken } = result;
+
+  sendCookies(res, refreshToken);
 
   sendResponse({
     res,
