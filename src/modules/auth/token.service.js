@@ -31,10 +31,6 @@ const generateJWT = (payload, secret, expiresIn) => {
   return jwt.sign(payload, secret, { expiresIn });
 };
 
-const hashToken = (token) => {
-  return crypto.createHash("sha256").update(token).digest("hex");
-};
-
 const generateJTI = () => {
   return crypto.randomUUID();
 };
@@ -65,4 +61,8 @@ exports.verifyAccessToken = (token) => {
 
 exports.verifyRefreshToken = (token) => {
   return verifyJwt(token, process.env.JWT_REFRESH_SECRET);
+};
+
+exports.hashToken = (token) => {
+  return crypto.createHash("sha256").update(token).digest("hex");
 };

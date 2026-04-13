@@ -22,11 +22,22 @@ const checkUserExists = async (email, errMsg = "Invalid credentials") => {
 const ensureUserNotExists = async (email, errMsg = "User already exists") => {
   const user = await authRepository.getUserByEmail(email);
   if (user) {
-    throw new ApiError(errMsg, HttpStatus.UnprocessableEntity);
+    throw new ApiError(errMsg, HttpStatus.Conflict);
   }
 };
 
 const sendVerificationEmail = async (user) => {
+  const lastOtpSentAt = user.otp_sent_at;
+
+  const lastSent = new Date(lastOtpSentAt).getTime();
+  
+  if (lastSent && Date.now() - lastSent < 60 * 1000) {
+    throw new ApiError(
+      "Your account is not verified. We already sent a verification code less than a minute ago. Please check your email or spam folder.",
+      HttpStatus.TooManyRequests,
+    );
+  }
+
   const otp = generateOTP();
   const hashedOTP = hashOTP(otp);
 
@@ -66,7 +77,7 @@ exports.loginService = async (req, meta) => {
 
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
-    throw new ApiError("Invalid credentials", HttpStatus.UnprocessableEntity);
+    throw new ApiError("Invalid credentials", HttpStatus.Unauthorized);
   }
 
   if (user.account_status === AccountStatus.UNVERIFIED) {
@@ -108,12 +119,12 @@ exports.verifyEmailService = async (req, meta) => {
     throw new ApiError("Invalid OTP", HttpStatus.UnprocessableEntity);
   }
 
-  await authRepository.verifyUser(user.id);
+  const verifiedUser = await authRepository.verifyUser(user.id);
 
   const { accessToken, refreshToken } = await generateTokensAndSaveSession(
-    user,
+    verifiedUser,
     meta,
   );
 
-  return { user, accessToken, refreshToken };
+  return { user: verifiedUser, accessToken, refreshToken };
 };

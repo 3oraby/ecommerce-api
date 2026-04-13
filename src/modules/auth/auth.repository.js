@@ -1,7 +1,6 @@
 const User = require("../user/user.model");
-const RefreshToken = require("../refreshToken.model");
+const RefreshToken = require("./refreshToken.model");
 const AccountStatus = require("../../enums/accountStatus.enum");
-const { refreshTokenDBDTO } = require("./auth.dto");
 
 exports.getUserByEmail = async (email) => {
   return await User.findOne({ where: { email } });
@@ -12,14 +11,15 @@ exports.createUser = async (userData) => {
 };
 
 exports.saveOTP = async (userId, hashedOTP) => {
-  const OTP_EXPIRES_IN = parseInt(process.env.OTP_EXPIRES_IN, 10) || 10;
+  const otpExpiresIn = parseInt(process.env.OTP_EXPIRES_IN, 10) || 10;
 
-  const expires = new Date(Date.now() + OTP_EXPIRES_IN * 60 * 1000);
+  const expires = new Date(Date.now() + otpExpiresIn * 60 * 1000);
 
   return await User.update(
     {
       otp: hashedOTP,
       otp_expires_at: expires,
+      otp_sent_at: new Date(),
     },
     { where: { id: userId } },
   );
@@ -31,6 +31,7 @@ exports.verifyUser = async (userId) => {
       account_status: AccountStatus.ACTIVE,
       otp: null,
       otp_expires_at: null,
+      otp_sent_at: null,
     },
     { where: { id: userId } },
   );
