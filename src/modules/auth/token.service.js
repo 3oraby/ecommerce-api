@@ -7,8 +7,6 @@ const {
   createRefreshPayload,
 } = require("./token.payload");
 
-const authRepository = require("./auth.repository");
-
 const verifyJwt = (token, secret) => {
   try {
     return jwt.verify(token, secret);
@@ -49,7 +47,7 @@ exports.generateAccessToken = (user) => {
   );
 };
 
-exports.generateRefreshToken = (user, req) => {
+exports.generateRefreshToken = (user) => {
   const jti = generateJTI();
 
   const refreshToken = generateJWT(
@@ -57,10 +55,8 @@ exports.generateRefreshToken = (user, req) => {
     process.env.JWT_REFRESH_SECRET,
     process.env.JWT_REFRESH_EXPIRES_IN,
   );
-  const hashedToken = hashToken(refreshToken);
-  
-  authRepository.saveRefreshToken(user, hashedToken, jti, req);
-  return refreshToken;
+
+  return { refreshToken, jti };
 };
 
 exports.verifyAccessToken = (token) => {

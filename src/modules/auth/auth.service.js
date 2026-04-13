@@ -4,31 +4,53 @@ const HttpStatus = require("../../enums/httpStatus.enum");
 const {
   generateAccessToken,
   generateRefreshToken,
+  hashToken,
 } = require("./token.service");
 const { comparePassword } = require("../../utils/password.util");
 const AccountStatus = require("../../enums/accountStatus.enum");
 
 const { generateOTP, hashOTP, verifyOTP } = require("../../utils/otp.util");
 
+const checkUserExists = async (email, errMsg = "Invalid credentials") => {
+  const user = await authRepository.getUserByEmail(email);
+  if (!user) {
+    throw new ApiError(errMsg, HttpStatus.UnprocessableEntity);
+  }
+  return user;
+};
+
+const ensureUserNotExists = async (email, errMsg = "User already exists") => {
+  const user = await authRepository.getUserByEmail(email);
+  if (user) {
+    throw new ApiError(errMsg, HttpStatus.UnprocessableEntity);
+  }
+};
+
 const sendVerificationEmail = async (user) => {
   const otp = generateOTP();
   const hashedOTP = hashOTP(otp);
 
-  // save OTP in DB
   await authRepository.saveOTP(user.id, hashedOTP);
 
   // TODO: send email
   console.log(`OTP for ${user.email}: ${otp}`);
 };
 
+const generateTokensAndSaveSession = async (user, meta) => {
+  const accessToken = generateAccessToken(user.id);
+
+  const { refreshToken, jti } = generateRefreshToken(user);
+
+  const hashedToken = hashToken(refreshToken);
+  await authRepository.saveRefreshToken(user, hashedToken, jti, meta);
+
+  return { accessToken, refreshToken };
+};
+
 exports.signupService = async (req) => {
   const { name, email, password, role } = req.body;
 
-  // check if user already exists
-  const existingUser = await authRepository.getUserByEmail(email);
-  if (existingUser) {
-    throw new ApiError("User already exists", HttpStatus.UnprocessableEntity);
-  }
+  await ensureUserNotExists(email);
 
   const user = await authRepository.createUser({ name, email, password, role });
 
@@ -37,24 +59,18 @@ exports.signupService = async (req) => {
   return { user };
 };
 
-exports.loginService = async (req) => {
+exports.loginService = async (req, meta) => {
   const { email, password } = req.body;
 
-  // check if user exists
-  const user = await authRepository.getUserByEmail(email);
-  if (!user) {
-    throw new ApiError("Invalid credentials", HttpStatus.UnprocessableEntity);
-  }
+  const user = await checkUserExists(email);
 
-  // check if password is correct
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
     throw new ApiError("Invalid credentials", HttpStatus.UnprocessableEntity);
   }
 
-  // check if user is not verified
   if (user.account_status === AccountStatus.UNVERIFIED) {
-    sendVerificationEmail(user);
+    await sendVerificationEmail(user);
 
     throw new ApiError(
       "Your account is not verified, check your email for the new OTP",
@@ -62,43 +78,42 @@ exports.loginService = async (req) => {
     );
   }
 
-  // generate tokens
-  const accessToken = generateAccessToken(user.id);
-
-  const refreshToken = generateRefreshToken(user, req);
+  const { accessToken, refreshToken } = await generateTokensAndSaveSession(
+    user,
+    meta,
+  );
 
   return { user, accessToken, refreshToken };
 };
 
-exports.verifyEmailService = async (req) => {
+exports.verifyEmailService = async (req, meta) => {
   const { email, otp } = req.body;
 
-  // check if user exists
-  const user = await authRepository.getUserByEmail(email);
-  if (!user) {
-    throw new ApiError("Invalid credentials", HttpStatus.UnprocessableEntity);
-  }
+  const user = await checkUserExists(email);
 
   if (user.account_status === AccountStatus.ACTIVE) {
     throw new ApiError("Account already verified", HttpStatus.BadRequest);
   }
 
-  // verify OTP
-  const isOTPValid = verifyOTP(otp, user.otp);
-  if (!isOTPValid) {
-    throw new ApiError(
-      "Invalid or expired OTP",
-      HttpStatus.UnprocessableEntity,
-    );
+  if (!user.otp || !user.otp_expires_at) {
+    throw new ApiError("No OTP found", HttpStatus.BadRequest);
   }
 
-  // activate account
+  if (user.otp_expires_at < new Date()) {
+    throw new ApiError("OTP expired", HttpStatus.UnprocessableEntity);
+  }
+
+  const isOTPValid = verifyOTP(otp, user.otp);
+  if (!isOTPValid) {
+    throw new ApiError("Invalid OTP", HttpStatus.UnprocessableEntity);
+  }
+
   await authRepository.verifyUser(user.id);
 
-  // generate tokens
-  const accessToken = generateAccessToken(user.id);
-
-  const refreshToken = generateRefreshToken(user, req);
+  const { accessToken, refreshToken } = await generateTokensAndSaveSession(
+    user,
+    meta,
+  );
 
   return { user, accessToken, refreshToken };
 };

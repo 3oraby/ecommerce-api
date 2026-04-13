@@ -36,15 +36,14 @@ exports.verifyUser = async (userId) => {
   );
 };
 
-exports.saveRefreshToken = async (user, hashedToken, jti, req) => {
+exports.saveRefreshToken = async (user, hashedToken, jti, meta) => {
   const expiresInDays = Number(process.env.JWT_REFRESH_EXPIRES_IN) || 90;
 
   const refreshTokenData = {
     user_id: user.id,
     token: hashedToken,
     jti,
-    device_info: req.headers["user-agent"],
-    ip_address: req.headers["x-forwarded-for"] || req.socket?.remoteAddress,
+    ...meta,
     expires_at: new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000),
   };
 

@@ -4,6 +4,13 @@ const sendResponse = require("../../utils/sendResponse");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const { sendCookies } = require("./cookie.service");
 
+const getRequestMeta = (req) => {
+  return {
+    device_info: req.headers["user-agent"],
+    ip_address: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
+  };
+};
+
 exports.signup = asyncHandler(async (req, res, next) => {
   const user = await authService.signupService(req);
 
@@ -16,8 +23,11 @@ exports.signup = asyncHandler(async (req, res, next) => {
 });
 
 exports.login = asyncHandler(async (req, res, next) => {
-  const { user, accessToken, refreshToken } =
-    await authService.loginService(req);
+  const meta = getRequestMeta(req);
+  const { user, accessToken, refreshToken } = await authService.loginService(
+    req,
+    meta,
+  );
 
   sendCookies(res, refreshToken);
 
@@ -31,7 +41,8 @@ exports.login = asyncHandler(async (req, res, next) => {
 });
 
 exports.verifyEmail = asyncHandler(async (req, res, next) => {
-  const result = await authService.verifyEmailService(req);
+  const meta = getRequestMeta(req);
+  const result = await authService.verifyEmailService(req, meta);
   const { user, accessToken, refreshToken } = result;
 
   sendCookies(res, refreshToken);
