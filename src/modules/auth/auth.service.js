@@ -30,7 +30,7 @@ const sendVerificationEmail = async (user) => {
   const lastOtpSentAt = user.otp_sent_at;
 
   const lastSent = new Date(lastOtpSentAt).getTime();
-  
+
   if (lastSent && Date.now() - lastSent < 60 * 1000) {
     throw new ApiError(
       "Your account is not verified. We already sent a verification code less than a minute ago. Please check your email or spam folder.",
@@ -67,7 +67,7 @@ exports.signupService = async (req) => {
 
   await sendVerificationEmail(user);
 
-  return { user };
+  return user;
 };
 
 exports.loginService = async (req, meta) => {

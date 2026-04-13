@@ -3,6 +3,7 @@ const authService = require("./auth.service");
 const sendResponse = require("../../utils/sendResponse");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const { sendCookies } = require("./cookie.service");
+const { sanitizeUser } = require("../user/user.utils");
 
 const getRequestMeta = (req) => {
   return {
@@ -18,7 +19,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
     res,
     statusCode: HttpStatus.Created,
     message: "OTP has been sent to your email, please verify it to login",
-    data: user,
+    data: sanitizeUser(user),
   });
 });
 
@@ -36,7 +37,7 @@ exports.login = asyncHandler(async (req, res, next) => {
     statusCode: HttpStatus.OK,
     message: "User logged in successfully",
     accessToken,
-    data: user,
+    data: sanitizeUser(user),
   });
 });
 
@@ -52,6 +53,6 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
     statusCode: HttpStatus.OK,
     message: "Email verified successfully",
     accessToken,
-    data: user,
+    data: sanitizeUser(user),
   });
 });

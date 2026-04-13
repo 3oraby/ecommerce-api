@@ -26,15 +26,14 @@ exports.saveOTP = async (userId, hashedOTP) => {
 };
 
 exports.verifyUser = async (userId) => {
-  return await User.update(
-    {
-      account_status: AccountStatus.ACTIVE,
-      otp: null,
-      otp_expires_at: null,
-      otp_sent_at: null,
-    },
-    { where: { id: userId } },
-  );
+  const user = await User.findByPk(userId);
+
+  return await user.update({
+    account_status: AccountStatus.ACTIVE,
+    otp: null,
+    otp_expires_at: null,
+    otp_sent_at: null,
+  });
 };
 
 exports.saveRefreshToken = async (user, hashedToken, jti, meta) => {
@@ -47,8 +46,6 @@ exports.saveRefreshToken = async (user, hashedToken, jti, meta) => {
     ...meta,
     expires_at: new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000),
   };
-
-  console.log("data before save in refreshToken model: ", refreshTokenData);
 
   return await RefreshToken.create(refreshTokenData);
 };
