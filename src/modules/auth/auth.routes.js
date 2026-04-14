@@ -5,6 +5,7 @@ const {
   signupValidation,
   loginValidation,
   verifyEmailValidation,
+  resendEmailVerificationValidation,
 } = require("./auth.validation");
 
 const router = express.Router();
@@ -15,6 +16,11 @@ router.post(
   "/verify-email",
   validate(verifyEmailValidation),
   authController.verifyEmail,
+);
+router.post(
+  "/resend-email-verification",
+  validate(resendEmailVerificationValidation),
+  authController.resendEmailVerification,
 );
 
 module.exports = router;

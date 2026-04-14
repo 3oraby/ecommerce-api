@@ -74,3 +74,13 @@ exports.verifyEmailValidation = z.object({
     }),
   }),
 });
+
+exports.resendEmailVerificationValidation = z.object({
+  body: z.object({
+    email: z
+      .string({
+        message: "Invalid request body. Expected 'email' field",
+      })
+      .email("Invalid email address"),
+  }),
+});

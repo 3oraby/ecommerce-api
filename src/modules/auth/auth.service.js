@@ -128,3 +128,18 @@ exports.verifyEmailService = async (req, meta) => {
 
   return { user: verifiedUser, accessToken, refreshToken };
 };
+
+exports.resendEmailVerificationService = async (req) => {
+  const { email } = req.body;
+
+  const user = await checkUserExists(email);
+
+  if (user.account_status === AccountStatus.ACTIVE) {
+    throw new ApiError("Account already verified", HttpStatus.BadRequest);
+  }
+
+  await sendVerificationEmail(user);
+
+  return user;
+};
+

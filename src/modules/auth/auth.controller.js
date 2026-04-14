@@ -56,3 +56,15 @@ exports.verifyEmail = asyncHandler(async (req, res, next) => {
     data: sanitizeUser(user),
   });
 });
+
+exports.resendEmailVerification = asyncHandler(async (req, res, next) => {
+  const user = await authService.resendEmailVerificationService(req);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Verification code sent successfully",
+    data: sanitizeUser(user),
+  });
+});
+
