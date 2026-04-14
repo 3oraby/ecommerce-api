@@ -134,7 +134,10 @@ exports.verifyEmailService = async (req, meta) => {
   }
 
   if (user.email_otp_expires_at < new Date()) {
-    throw new ApiError("OTP expired", HttpStatus.UnprocessableEntity);
+    throw new ApiError(
+      "Your verification code has expired, please request a new one",
+      HttpStatus.UnprocessableEntity,
+    );
   }
 
   const isOTPValid = verifyOTP(otp, user.email_otp);
@@ -192,7 +195,10 @@ exports.verifyResetOtpService = async (req) => {
   }
 
   if (user.reset_password_otp_expires_at < new Date()) {
-    throw new ApiError("OTP expired", HttpStatus.UnprocessableEntity);
+    throw new ApiError(
+      "Your verification code has expired, please request a new one",
+      HttpStatus.UnprocessableEntity,
+    );
   }
 
   const isOTPValid = verifyOTP(otp, user.reset_password_otp);

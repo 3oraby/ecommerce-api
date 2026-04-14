@@ -39,7 +39,7 @@ router.post(
   authController.verifyResetOtp,
 );
 
-router.post(
+router.patch(
   "/reset-password",
   validate(resetPasswordValidation),
   authController.resetPassword,

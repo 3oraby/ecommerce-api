@@ -70,12 +70,12 @@ exports.hashToken = (token) => {
 
 exports.generatePasswordResetToken = (user) => {
   const payload = createResetPasswordPayload(user);
-  const secret = process.env.JWT_RESET_SECRET + user.password;
+  const secret = process.env.JWT_RESET_SECRET;
   return generateJWT(payload, secret, process.env.JWT_RESET_EXPIRES_IN);
 };
 
-exports.verifyPasswordResetToken = (token, user) => {
-  const secret = process.env.JWT_RESET_SECRET + user.password;
+exports.verifyPasswordResetToken = (token) => {
+  const secret = process.env.JWT_RESET_SECRET;
   try {
     return verifyJwt(token, secret);
   } catch (err) {
