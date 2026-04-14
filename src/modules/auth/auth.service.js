@@ -190,6 +190,15 @@ exports.verifyResetOtpService = async (req) => {
   const { email, otp } = req.body;
   const user = await checkUserExists(email);
 
+  if (user.account_status === AccountStatus.UNVERIFIED) {
+    await sendVerificationEmail(user);
+
+    throw new ApiError(
+      "Your account is not verified, check your email for the new OTP",
+      HttpStatus.UnprocessableEntity,
+    );
+  }
+
   if (!user.reset_password_otp || !user.reset_password_otp_expires_at) {
     throw new ApiError("No OTP found", HttpStatus.BadRequest);
   }
@@ -205,6 +214,8 @@ exports.verifyResetOtpService = async (req) => {
   if (!isOTPValid) {
     throw new ApiError("Invalid OTP", HttpStatus.UnprocessableEntity);
   }
+
+  await authRepository.clearResetOTP(user.id);
 
   const resetToken = generatePasswordResetToken(user);
 
@@ -238,6 +249,8 @@ exports.resetPasswordService = async (req) => {
 
   await authRepository.revokeAllUserSessions(user.id);
 
+  await authRepository.clearResetOTP(user.id);
+
   return updatedUser;
 };
 
@@ -247,7 +260,7 @@ exports.resendPasswordResetOtpService = async (req) => {
   const user = await checkUserExists(email);
 
   if (user.account_status === AccountStatus.UNVERIFIED) {
-    await sendPasswordResetEmail(user);
+    await sendVerificationEmail(user);
 
     throw new ApiError(
       "Your account is not verified, check your email for the new OTP",

@@ -69,14 +69,22 @@ exports.saveRefreshToken = async (user, hashedToken, jti, meta) => {
   return await RefreshToken.create(refreshTokenData);
 };
 
+exports.clearResetOTP = async (userId) => {
+  return await User.update(
+    {
+      reset_password_otp: null,
+      reset_password_otp_expires_at: null,
+      reset_password_otp_sent_at: null,
+    },
+    { where: { id: userId } },
+  );
+};
+
 exports.updateUserPassword = async (userId, newPassword) => {
   const user = await User.findByPk(userId);
 
   return await user.update({
     password: newPassword,
-    reset_password_otp: null,
-    reset_password_otp_expires_at: null,
-    reset_password_otp_sent_at: null,
   });
 };
 
@@ -86,4 +94,3 @@ exports.revokeAllUserSessions = async (userId) => {
     { where: { user_id: userId } },
   );
 };
-

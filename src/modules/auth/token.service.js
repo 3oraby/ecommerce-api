@@ -81,7 +81,7 @@ exports.verifyPasswordResetToken = (token) => {
   } catch (err) {
     if (err.statusCode === HttpStatus.Unauthorized) {
       err.message = err.message.includes("expired")
-        ? "Reset token expired. Please request a new one."
+        ? "Your reset token has expired. Please request a new password reset code."
         : "Invalid or already used reset token.";
       throw err;
     }
