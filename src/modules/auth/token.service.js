@@ -3,8 +3,9 @@ const ApiError = require("../../utils/apiError");
 const crypto = require("crypto");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const {
-  createAccessPayload,
-  createRefreshPayload,
+  createAccessTokenPayload,
+  createRefreshTokenPayload,
+  createResetPasswordPayload,
 } = require("./token.payload");
 
 const verifyJwt = (token, secret) => {
@@ -37,7 +38,7 @@ const generateJTI = () => {
 
 exports.generateAccessToken = (user) => {
   return generateJWT(
-    createAccessPayload(user),
+    createAccessTokenPayload(user),
     process.env.JWT_ACCESS_SECRET,
     process.env.JWT_ACCESS_EXPIRES_IN,
   );
@@ -47,7 +48,7 @@ exports.generateRefreshToken = (user) => {
   const jti = generateJTI();
 
   const refreshToken = generateJWT(
-    createRefreshPayload(user, jti),
+    createRefreshTokenPayload(user, jti),
     process.env.JWT_REFRESH_SECRET,
     process.env.JWT_REFRESH_EXPIRES_IN,
   );
@@ -65,4 +66,28 @@ exports.verifyRefreshToken = (token) => {
 
 exports.hashToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
+};
+
+exports.generatePasswordResetToken = (user) => {
+  const payload = createResetPasswordPayload(user);
+  const secret = process.env.JWT_RESET_SECRET + user.password;
+  return generateJWT(payload, secret, process.env.JWT_RESET_EXPIRES_IN);
+};
+
+exports.verifyPasswordResetToken = (token, user) => {
+  const secret = process.env.JWT_RESET_SECRET + user.password;
+  try {
+    return verifyJwt(token, secret);
+  } catch (err) {
+    if (err.statusCode === HttpStatus.Unauthorized) {
+      err.message = err.message.includes("expired")
+        ? "Reset token expired. Please request a new one."
+        : "Invalid or already used reset token.";
+      throw err;
+    }
+    throw new ApiError(
+      "Invalid or already used reset token.",
+      HttpStatus.Unauthorized,
+    );
+  }
 };

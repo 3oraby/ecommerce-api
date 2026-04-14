@@ -6,6 +6,10 @@ const {
   loginValidation,
   verifyEmailValidation,
   resendEmailVerificationValidation,
+  forgotPasswordValidation,
+  verifyResetOtpValidation,
+  resetPasswordValidation,
+  resendPasswordResetOtpValidation,
 } = require("./auth.validation");
 
 const router = express.Router();
@@ -21,6 +25,30 @@ router.post(
   "/resend-email-verification",
   validate(resendEmailVerificationValidation),
   authController.resendEmailVerification,
+);
+
+router.post(
+  "/forgot-password",
+  validate(forgotPasswordValidation),
+  authController.forgotPassword,
+);
+
+router.post(
+  "/verify-reset-otp",
+  validate(verifyResetOtpValidation),
+  authController.verifyResetOtp,
+);
+
+router.post(
+  "/reset-password",
+  validate(resetPasswordValidation),
+  authController.resetPassword,
+);
+
+router.post(
+  "/resend-password-reset-otp",
+  validate(resendPasswordResetOtpValidation),
+  authController.resendPasswordResetOtp,
 );
 
 module.exports = router;

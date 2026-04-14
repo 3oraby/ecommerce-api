@@ -54,17 +54,27 @@ const User = sequelize.define(
       ),
       defaultValue: AccountStatus.UNVERIFIED,
     },
-    otp: {
+    email_otp: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
-    otp_expires_at: {
+    email_otp_expires_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-
-    otp_sent_at: {
+    email_otp_sent_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    reset_password_otp: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    reset_password_otp_expires_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    reset_password_otp_sent_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },

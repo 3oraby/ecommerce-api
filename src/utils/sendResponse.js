@@ -8,6 +8,7 @@ const sendResponse = ({
   message = null,
   data = null,
   results = null,
+  resetToken = null,
 }) => {
   const response = {
     status,
@@ -17,6 +18,7 @@ const sendResponse = ({
   if (results !== null) response.results = results;
   if (accessToken !== null) response.accessToken = accessToken;
   if (data !== null) response.data = data;
+  if (resetToken !== null) response.resetToken = resetToken;
 
   res.status(statusCode).json(response);
 };

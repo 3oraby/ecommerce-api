@@ -5,6 +5,8 @@ const {
   generateAccessToken,
   generateRefreshToken,
   hashToken,
+  generatePasswordResetToken,
+  verifyPasswordResetToken,
 } = require("./token.service");
 const { comparePassword } = require("../../utils/password.util");
 const AccountStatus = require("../../enums/accountStatus.enum");
@@ -27,7 +29,7 @@ const ensureUserNotExists = async (email, errMsg = "User already exists") => {
 };
 
 const sendVerificationEmail = async (user) => {
-  const lastOtpSentAt = user.otp_sent_at;
+  const lastOtpSentAt = user.email_otp_sent_at;
 
   const lastSent = new Date(lastOtpSentAt).getTime();
 
@@ -41,10 +43,31 @@ const sendVerificationEmail = async (user) => {
   const otp = generateOTP();
   const hashedOTP = hashOTP(otp);
 
-  await authRepository.saveOTP(user.id, hashedOTP);
+  await authRepository.saveEmailOTP(user.id, hashedOTP);
 
   // TODO: send email
-  console.log(`OTP for ${user.email}: ${otp}`);
+  console.log(`Email verification OTP for ${user.email}: ${otp}`);
+};
+
+const sendPasswordResetEmail = async (user) => {
+  const lastOtpSentAt = user.reset_password_otp_sent_at;
+
+  const lastSent = new Date(lastOtpSentAt).getTime();
+
+  if (lastSent && Date.now() - lastSent < 60 * 1000) {
+    throw new ApiError(
+      "We already sent a password reset code less than a minute ago. Please check your email or spam folder.",
+      HttpStatus.TooManyRequests,
+    );
+  }
+
+  const otp = generateOTP();
+  const hashedOTP = hashOTP(otp);
+
+  await authRepository.saveResetPasswordOTP(user.id, hashedOTP);
+
+  // TODO: send email
+  console.log(`Password reset OTP for ${user.email}: ${otp}`);
 };
 
 const generateTokensAndSaveSession = async (user, meta) => {
@@ -106,15 +129,15 @@ exports.verifyEmailService = async (req, meta) => {
     throw new ApiError("Account already verified", HttpStatus.BadRequest);
   }
 
-  if (!user.otp || !user.otp_expires_at) {
+  if (!user.email_otp || !user.email_otp_expires_at) {
     throw new ApiError("No OTP found", HttpStatus.BadRequest);
   }
 
-  if (user.otp_expires_at < new Date()) {
+  if (user.email_otp_expires_at < new Date()) {
     throw new ApiError("OTP expired", HttpStatus.UnprocessableEntity);
   }
 
-  const isOTPValid = verifyOTP(otp, user.otp);
+  const isOTPValid = verifyOTP(otp, user.email_otp);
   if (!isOTPValid) {
     throw new ApiError("Invalid OTP", HttpStatus.UnprocessableEntity);
   }
@@ -143,3 +166,86 @@ exports.resendEmailVerificationService = async (req) => {
   return user;
 };
 
+exports.forgotPasswordService = async (req) => {
+  const { email } = req.body;
+
+  const user = await checkUserExists(email);
+
+  if (user.account_status === AccountStatus.UNVERIFIED) {
+    await sendVerificationEmail(user);
+
+    throw new ApiError(
+      "Your account is not verified, check your email for the new OTP",
+      HttpStatus.UnprocessableEntity,
+    );
+  }
+
+  await sendPasswordResetEmail(user);
+};
+
+exports.verifyResetOtpService = async (req) => {
+  const { email, otp } = req.body;
+  const user = await checkUserExists(email);
+
+  if (!user.reset_password_otp || !user.reset_password_otp_expires_at) {
+    throw new ApiError("No OTP found", HttpStatus.BadRequest);
+  }
+
+  if (user.reset_password_otp_expires_at < new Date()) {
+    throw new ApiError("OTP expired", HttpStatus.UnprocessableEntity);
+  }
+
+  const isOTPValid = verifyOTP(otp, user.reset_password_otp);
+  if (!isOTPValid) {
+    throw new ApiError("Invalid OTP", HttpStatus.UnprocessableEntity);
+  }
+
+  const resetToken = generatePasswordResetToken(user);
+
+  return { resetToken };
+};
+
+exports.resetPasswordService = async (req) => {
+  const { resetToken, newPassword } = req.body;
+
+  const decoded = verifyPasswordResetToken(resetToken);
+
+  if (!decoded || !decoded.email || decoded.type !== "reset") {
+    throw new ApiError("Invalid reset token", HttpStatus.Unauthorized);
+  }
+
+  const user = await checkUserExists(decoded.email);
+
+  if (user.account_status === AccountStatus.UNVERIFIED) {
+    await sendVerificationEmail(user);
+
+    throw new ApiError(
+      "Your account is not verified, check your email for the new OTP",
+      HttpStatus.UnprocessableEntity,
+    );
+  }
+
+  const updatedUser = await authRepository.updateUserPassword(
+    user.id,
+    newPassword,
+  );
+
+  return updatedUser;
+};
+
+exports.resendPasswordResetOtpService = async (req) => {
+  const { email } = req.body;
+
+  const user = await checkUserExists(email);
+
+  if (user.account_status === AccountStatus.UNVERIFIED) {
+    await sendVerificationEmail(user);
+
+    throw new ApiError(
+      "Your account is not verified, check your email for the new OTP",
+      HttpStatus.UnprocessableEntity,
+    );
+  }
+
+  await sendPasswordResetEmail(user);
+};

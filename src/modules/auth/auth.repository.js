@@ -6,20 +6,39 @@ exports.getUserByEmail = async (email) => {
   return await User.findOne({ where: { email } });
 };
 
+exports.getUserById = async (id) => {
+  return await User.findByPk(id);
+};
+
 exports.createUser = async (userData) => {
   return await User.create(userData);
 };
 
-exports.saveOTP = async (userId, hashedOTP) => {
+exports.saveEmailOTP = async (userId, hashedOTP) => {
   const otpExpiresIn = parseInt(process.env.OTP_EXPIRES_IN, 10) || 10;
 
   const expires = new Date(Date.now() + otpExpiresIn * 60 * 1000);
 
   return await User.update(
     {
-      otp: hashedOTP,
-      otp_expires_at: expires,
-      otp_sent_at: new Date(),
+      email_otp: hashedOTP,
+      email_otp_expires_at: expires,
+      email_otp_sent_at: new Date(),
+    },
+    { where: { id: userId } },
+  );
+};
+
+exports.saveResetPasswordOTP = async (userId, hashedOTP) => {
+  const otpExpiresIn = parseInt(process.env.OTP_EXPIRES_IN, 10) || 10;
+
+  const expires = new Date(Date.now() + otpExpiresIn * 60 * 1000);
+
+  return await User.update(
+    {
+      reset_password_otp: hashedOTP,
+      reset_password_otp_expires_at: expires,
+      reset_password_otp_sent_at: new Date(),
     },
     { where: { id: userId } },
   );
@@ -30,9 +49,9 @@ exports.verifyUser = async (userId) => {
 
   return await user.update({
     account_status: AccountStatus.ACTIVE,
-    otp: null,
-    otp_expires_at: null,
-    otp_sent_at: null,
+    email_otp: null,
+    email_otp_expires_at: null,
+    email_otp_sent_at: null,
   });
 };
 
@@ -49,3 +68,15 @@ exports.saveRefreshToken = async (user, hashedToken, jti, meta) => {
 
   return await RefreshToken.create(refreshTokenData);
 };
+
+exports.updateUserPassword = async (userId, newPassword) => {
+  const user = await User.findByPk(userId);
+
+  return await user.update({
+    password: newPassword,
+    reset_password_otp: null,
+    reset_password_otp_expires_at: null,
+    reset_password_otp_sent_at: null,
+  });
+};
+

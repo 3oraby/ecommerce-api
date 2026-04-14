@@ -68,3 +68,44 @@ exports.resendEmailVerification = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  await authService.forgotPasswordService(req);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Password reset code sent to your email",
+  });
+});
+
+exports.verifyResetOtp = asyncHandler(async (req, res, next) => {
+  const { resetToken } = await authService.verifyResetOtpService(req);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "OTP verified successfully",
+    resetToken,
+  });
+});
+
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+  const user = await authService.resetPasswordService(req);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Password reset successfully",
+    data: sanitizeUser(user),
+  });
+});
+
+exports.resendPasswordResetOtp = asyncHandler(async (req, res, next) => {
+  await authService.resendPasswordResetOtpService(req);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "A new password reset code has been sent to your email",
+  });
+});

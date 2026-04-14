@@ -83,4 +83,42 @@ exports.resendEmailVerificationValidation = z.object({
       })
       .email("Invalid email address"),
   }),
+});
+
+exports.forgotPasswordValidation = z.object({
+  body: z.object({
+    email: z.string({
+      message: "Invalid request body. Expected 'email' field",
+    }).email("Invalid email address"),
+  }),
+});
+
+exports.verifyResetOtpValidation = z.object({
+  body: z.object({
+    email: z.string({
+      message: "Invalid request body. Expected 'email' field",
+    }).email("Invalid email address"),
+    otp: z.string({
+      message: "Invalid request body. Expected 'otp' field",
+    }),
+  }),
+});
+
+exports.resetPasswordValidation = z.object({
+  body: z.object({
+    resetToken: z.string({
+      message: "Invalid request body. Expected 'resetToken' field",
+    }),
+    newPassword: z.string({
+      message: "Invalid request body. Expected 'newPassword' field",
+    }).min(6, "Password must be at least 6 characters long"),
+  }),
+});
+
+exports.resendPasswordResetOtpValidation = z.object({
+  body: z.object({
+    email: z.string({
+      message: "Invalid request body. Expected 'email' field",
+    }).email("Invalid email address"),
+  }),
 });
