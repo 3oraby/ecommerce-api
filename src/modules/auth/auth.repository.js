@@ -80,3 +80,10 @@ exports.updateUserPassword = async (userId, newPassword) => {
   });
 };
 
+exports.revokeAllUserSessions = async (userId) => {
+  return await RefreshToken.update(
+    { is_revoked: true },
+    { where: { user_id: userId } },
+  );
+};
+

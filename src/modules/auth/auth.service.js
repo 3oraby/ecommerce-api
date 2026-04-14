@@ -236,6 +236,8 @@ exports.resetPasswordService = async (req) => {
     newPassword,
   );
 
+  await authRepository.revokeAllUserSessions(user.id);
+
   return updatedUser;
 };
 
@@ -245,7 +247,7 @@ exports.resendPasswordResetOtpService = async (req) => {
   const user = await checkUserExists(email);
 
   if (user.account_status === AccountStatus.UNVERIFIED) {
-    await sendVerificationEmail(user);
+    await sendPasswordResetEmail(user);
 
     throw new ApiError(
       "Your account is not verified, check your email for the new OTP",

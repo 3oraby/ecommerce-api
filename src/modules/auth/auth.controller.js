@@ -90,13 +90,12 @@ exports.verifyResetOtp = asyncHandler(async (req, res, next) => {
 });
 
 exports.resetPassword = asyncHandler(async (req, res, next) => {
-  const user = await authService.resetPasswordService(req);
+  await authService.resetPasswordService(req);
 
   sendResponse({
     res,
     statusCode: HttpStatus.OK,
-    message: "Password reset successfully",
-    data: sanitizeUser(user),
+    message: "Password reset successfully, now you can login",
   });
 });
 
