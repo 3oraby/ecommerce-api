@@ -3,9 +3,74 @@ const Roles = require("../../enums/roles.enum");
 
 exports.signupValidation = z.object({
   body: z.object({
-    name: z.string().min(3, "Name must be at least 3 characters long"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters long"),
-    role: z.enum([Roles.ADMIN, Roles.SELLER, Roles.CUSTOMER]),
+    name: z
+      .string({
+        message: "Invalid request body. Expected 'name' field",
+      })
+      .min(3, "Name must be at least 3 characters long"),
+
+    email: z
+      .string({
+        message: "Invalid request body. Expected 'email' field",
+      })
+      .email("Invalid email address"),
+
+    password: z
+      .string({
+        message: "Invalid request body. Expected 'password' field",
+      })
+      .min(6, "Password must be at least 6 characters long"),
+
+    role: z
+      .string({
+        message: "Role is required",
+      })
+      .transform((val) => val.toUpperCase())
+      .refine(
+        (val) => [Roles.ADMIN, Roles.SELLER, Roles.CUSTOMER].includes(val),
+        {
+          message: "Invalid role. Expected 'admin', 'seller', or 'customer'",
+        },
+      ),
+
+    phone: z
+      .string()
+      .transform((val) => val.replace(/^(\+2|002)/, "0"))
+      .refine(
+        (val) => /^01[0125][0-9]{8}$/.test(val) || /^\+\d{10,15}$/.test(val),
+        {
+          message: "Invalid phone number",
+        },
+      )
+      .optional(),
+
+    birth_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD")
+      .optional(),
+  }),
+});
+
+exports.loginValidation = z.object({
+  body: z.object({
+    email: z.string({
+      message: "Invalid request body. Expected 'email' field",
+    }),
+
+    password: z.string({
+      message: "Invalid request body. Expected 'password' field",
+    }),
+  }),
+});
+
+exports.verifyEmailValidation = z.object({
+  body: z.object({
+    email: z.string({
+      message: "Invalid request body. Expected 'email' field",
+    }),
+
+    otp: z.string({
+      message: "Invalid request body. Expected 'otp' field",
+    }),
   }),
 });

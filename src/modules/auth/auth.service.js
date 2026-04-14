@@ -59,11 +59,11 @@ const generateTokensAndSaveSession = async (user, meta) => {
 };
 
 exports.signupService = async (req) => {
-  const { name, email, password, role } = req.body;
+  const body = req.body;
 
-  await ensureUserNotExists(email);
+  await ensureUserNotExists(body.email);
 
-  const user = await authRepository.createUser({ name, email, password, role });
+  const user = await authRepository.createUser(body);
 
   await sendVerificationEmail(user);
 

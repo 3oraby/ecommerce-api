@@ -12,7 +12,10 @@ const validate = (schema) => (req, res, next) => {
     next();
   } catch (err) {
     const error = fromZodError(err);
-    return next(new ApiError(error.message, HttpStatus.BadRequest));
+
+    const messages = error.details.map((e) => e.message);
+
+    return next(new ApiError(messages.join(" , "), HttpStatus.BadRequest));
   }
 };
 
