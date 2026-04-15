@@ -87,17 +87,21 @@ exports.resendEmailVerificationValidation = z.object({
 
 exports.forgotPasswordValidation = z.object({
   body: z.object({
-    email: z.string({
-      message: "Invalid request body. Expected 'email' field",
-    }).email("Invalid email address"),
+    email: z
+      .string({
+        message: "Invalid request body. Expected 'email' field",
+      })
+      .email("Invalid email address"),
   }),
 });
 
 exports.verifyResetOtpValidation = z.object({
   body: z.object({
-    email: z.string({
-      message: "Invalid request body. Expected 'email' field",
-    }).email("Invalid email address"),
+    email: z
+      .string({
+        message: "Invalid request body. Expected 'email' field",
+      })
+      .email("Invalid email address"),
     otp: z.string({
       message: "Invalid request body. Expected 'otp' field",
     }),
@@ -109,16 +113,39 @@ exports.resetPasswordValidation = z.object({
     resetToken: z.string({
       message: "Invalid request body. Expected 'resetToken' field",
     }),
-    newPassword: z.string({
-      message: "Invalid request body. Expected 'newPassword' field",
-    }).min(6, "Password must be at least 6 characters long"),
+    newPassword: z
+      .string({
+        message: "Invalid request body. Expected 'newPassword' field",
+      })
+      .min(6, "Password must be at least 6 characters long"),
   }),
 });
 
 exports.resendPasswordResetOtpValidation = z.object({
   body: z.object({
-    email: z.string({
-      message: "Invalid request body. Expected 'email' field",
-    }).email("Invalid email address"),
+    email: z
+      .string({
+        message: "Invalid request body. Expected 'email' field",
+      })
+      .email("Invalid email address"),
   }),
-});
+});
+
+exports.updatePasswordValidation = z.object({
+  body: z
+    .object({
+      currentPassword: z.string({
+        message: "Invalid request body. Expected 'currentPassword' field",
+      }),
+
+      newPassword: z
+        .string({
+          message: "Invalid request body. Expected 'newPassword' field",
+        })
+        .min(6, "Password must be at least 6 characters long"),
+    })
+    .refine((data) => data.currentPassword !== data.newPassword, {
+      message: "New password must be different from current password",
+      path: ["newPassword"],
+    }),
+});

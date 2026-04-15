@@ -11,6 +11,7 @@ const {
   verifyResetOtpValidation,
   resetPasswordValidation,
   resendPasswordResetOtpValidation,
+  updatePasswordValidation,
 } = require("./auth.validation");
 
 const router = express.Router();
@@ -55,6 +56,13 @@ router.post(
 router.post("/logout", authController.logout);
 
 router.post("/refresh-token", authController.refreshToken);
+
+router.patch(
+  "/update-password",
+  authenticate,
+  validate(updatePasswordValidation),
+  authController.updatePassword
+);
 
 router.post("/logout-all-devices", authController.logoutAllDevices);
 

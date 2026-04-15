@@ -36,6 +36,7 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
       ),
     );
   }
+
   const user = await User.findByPk(decoded.id);
 
   if (!user) {

@@ -149,3 +149,15 @@ exports.logoutAllDevices = asyncHandler(async (req, res, next) => {
     message: "Logged out from all devices successfully",
   });
 });
+
+exports.updatePassword = asyncHandler(async (req, res, next) => {
+  await authService.updatePasswordService(req);
+
+  clearCookies(res);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Password updated successfully, please login again",
+  });
+});

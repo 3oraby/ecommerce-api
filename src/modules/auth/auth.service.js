@@ -126,7 +126,7 @@ const validateRefreshToken = async (refreshToken) => {
 };
 
 const generateTokensAndSaveSession = async (user, meta) => {
-  const accessToken = generateAccessToken(user.id);
+  const accessToken = generateAccessToken(user);
 
   const { refreshToken, jti } = generateRefreshToken(user);
 
@@ -355,4 +355,21 @@ exports.logoutAllDevicesService = async (req) => {
   const decoded = await validateRefreshToken(refreshToken);
 
   await authRepository.revokeAllUserSessions(decoded.id);
+};
+
+exports.updatePasswordService = async (req) => {
+  const { currentPassword, newPassword } = req.body;
+  const user = req.user;
+
+  const isPasswordValid = await comparePassword(currentPassword, user.password);
+  if (!isPasswordValid) {
+    throw new ApiError(
+      "Current password is incorrect",
+      HttpStatus.Unauthorized,
+    );
+  }
+
+  await authRepository.updateUserPassword(user.id, newPassword);
+
+  await authRepository.revokeAllUserSessions(user.id);
 };
