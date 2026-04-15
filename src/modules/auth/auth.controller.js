@@ -120,3 +120,20 @@ exports.logout = asyncHandler(async (req, res, next) => {
     message: "Logged out successfully",
   });
 });
+
+exports.refreshToken = asyncHandler(async (req, res, next) => {
+  const meta = getRequestMeta(req);
+  const { accessToken, refreshToken } = await authService.refreshTokenService(
+    req,
+    meta,
+  );
+
+  sendCookies(res, refreshToken);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Token refreshed successfully",
+    accessToken,
+  });
+});

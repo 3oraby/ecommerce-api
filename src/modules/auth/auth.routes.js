@@ -53,7 +53,7 @@ router.post(
 
 router.post("/logout", authController.logout);
 
-// refresh token
+router.post("/refresh-token", authController.refreshToken);
 // update password
 // logoout all devices
 

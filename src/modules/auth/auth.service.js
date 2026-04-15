@@ -286,10 +286,72 @@ exports.logoutService = async (req) => {
     throw new ApiError("Invalid refresh token", HttpStatus.Unauthorized);
   }
 
+  if (!decoded || !decoded.id || !decoded.jti) {
+    throw new ApiError("Invalid token payload", HttpStatus.Unauthorized);
+  }
+
   const tokenRecord = await authRepository.findRefreshTokenByJti(decoded.jti);
   if (!tokenRecord || tokenRecord.is_revoked) {
     throw new ApiError("Invalid refresh token", HttpStatus.Unauthorized);
   }
 
   await authRepository.revokeRefreshToken(decoded.jti);
+};
+
+exports.refreshTokenService = async (req, meta) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (!refreshToken) {
+    throw new ApiError("No refresh token found", HttpStatus.Unauthorized);
+  }
+
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (err) {
+    throw new ApiError("Invalid refresh token", HttpStatus.Unauthorized);
+  }
+
+  if (!decoded || !decoded.id || !decoded.jti) {
+    throw new ApiError("Invalid token payload", HttpStatus.Unauthorized);
+  }
+
+  const tokenRecord = await authRepository.findRefreshTokenByJti(decoded.jti);
+
+  if (!tokenRecord) {
+    throw new ApiError("Invalid refresh token", HttpStatus.Unauthorized);
+  }
+
+  if (tokenRecord.is_revoked) {
+    await authRepository.revokeAllUserSessions(decoded.id);
+    throw new ApiError(
+      "Security alert: Token reuse detected. All sessions reliably revoked.",
+      HttpStatus.Unauthorized,
+    );
+  }
+
+  if (tokenRecord.expires_at && new Date(tokenRecord.expires_at) < new Date()) {
+    await authRepository.revokeRefreshToken(decoded.jti);
+
+    throw new ApiError("Refresh token expired", HttpStatus.Unauthorized);
+  }
+
+  const user = await authRepository.getUserById(decoded.id);
+  if (!user) {
+    throw new ApiError("Invalid refresh token", HttpStatus.Unauthorized);
+  }
+
+  if (user.account_status !== AccountStatus.ACTIVE) {
+    throw new ApiError(
+      "Account is not active. Refresh denied.",
+      HttpStatus.Forbidden,
+    );
+  }
+
+  const { accessToken, refreshToken: newRefreshToken } =
+    await generateTokensAndSaveSession(user, meta);
+
+  await authRepository.revokeRefreshToken(decoded.jti);
+
+  return { accessToken, refreshToken: newRefreshToken };
 };
