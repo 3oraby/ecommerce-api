@@ -1,9 +1,12 @@
 const express = require("express");
 const userController = require("./user.controller");
 const validate = require("../../middlewares/validate.middleware");
+const { restrictTo } = require("../../middlewares/restrictTo.middleware");
+const Roles = require("../../enums/roles.enum");
 const {
   createUserSchema,
   updateUserSchema,
+  updateMeSchema,
   userIdParamsSchema,
 } = require("./user.validation");
 const { authenticate } = require("../../middlewares/authenticate.middleware");
@@ -12,10 +15,13 @@ const router = express.Router();
 
 router.use(authenticate);
 
-// add restrict to
+// --- ANY USER ---
 router.get("/me", userController.getMe);
-router.patch("/me", userController.updateMe);
+router.patch("/me", validate(updateMeSchema), userController.updateMe);
 router.delete("/me", userController.deleteMe);
+
+// --- ADMIN ONLY ---
+router.use(restrictTo(Roles.ADMIN));
 
 router
   .route("/")

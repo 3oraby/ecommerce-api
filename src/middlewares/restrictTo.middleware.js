@@ -1,4 +1,4 @@
-const HttpStatus = require("../enums/httpStatus");
+const HttpStatus = require("../enums/httpStatus.enum");
 const ApiError = require("../utils/apiError");
 
 exports.restrictTo = (...roles) => {

@@ -1,58 +1,88 @@
 const userRepository = require("./user.repository");
+const authRepository = require("../auth/auth.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 
-class UserService {
-  async createUser(userData) {
-    // Check if email already exists
-    const existingUser = await userRepository.findByEmail(userData.email);
-    if (existingUser) {
-      throw new ApiError("Email is already in use", HttpStatus.Conflict);
-    }
-
-    return await userRepository.createUser(userData);
+exports.createUserService = async (userData) => {
+  const existingUser = await userRepository.findByEmailWithDeleted(
+    userData.email,
+  );
+  if (existingUser && !existingUser?.deleted_at) {
+    throw new ApiError("Email is already in use", HttpStatus.Conflict);
   }
 
-  async getAllUsers() {
-    return await userRepository.findAll();
+  if (existingUser && existingUser?.deleted_at) {
+    throw new ApiError(
+      "This account was deleted. Please restore your account instead of creating a new one.",
+      HttpStatus.Conflict,
+    );
   }
 
-  async getUserById(id) {
-    const user = await userRepository.findById(id);
-    if (!user) {
-      throw new ApiError("User not found", HttpStatus.NotFound);
-    }
-    return user;
+  return await userRepository.createUser(userData);
+};
+
+exports.getAllUsersService = async () => {
+  return await userRepository.findAll();
+};
+
+exports.getUserByIdService = async (id) => {
+  const user = await userRepository.findById(id);
+  if (!user) {
+    throw new ApiError("User not found", HttpStatus.NotFound);
+  }
+  return user;
+};
+
+exports.updateUserByIdService = async (id, updateData) => {
+  if (Object.keys(updateData).length === 0) {
+    throw new ApiError("Request body cannot be empty", HttpStatus.BadRequest);
   }
 
-  async getCurrentUser(id) {
-    // Wrapper for retrieving current user details
-    return this.getUserById(id);
+  if (updateData.password) {
+    throw new ApiError(
+      "wrong route, you can not update password",
+      HttpStatus.BadRequest,
+    );
   }
 
-  async updateUser(id, updateData) {
-    // Check if email is updated and unique
-    if (updateData.email) {
-      const existingUser = await userRepository.findByEmail(updateData.email);
-      if (existingUser && existingUser.id !== Number(id)) {
-        throw new ApiError("Email is already in use", HttpStatus.Conflict);
-      }
-    }
-
-    const updatedUser = await userRepository.updateUser(id, updateData);
-    if (!updatedUser) {
-      throw new ApiError("User not found", HttpStatus.NotFound);
-    }
-    return updatedUser;
+  if (updateData.email) {
+    throw new ApiError(
+      "wrong route, you can not update email",
+      HttpStatus.BadRequest,
+    );
   }
 
-  async deleteUser(id) {
-    const result = await userRepository.deleteUser(id);
-    if (!result) {
-      throw new ApiError("User not found", HttpStatus.NotFound);
-    }
-    return result;
+  const updatedUser = await userRepository.updateUserById(id, updateData);
+  if (!updatedUser) {
+    throw new ApiError("User not found", HttpStatus.NotFound);
   }
-}
+  return updatedUser;
+};
 
-module.exports = new UserService();
+exports.deleteUserByIdService = async (id) => {
+  const result = await userRepository.deleteUserById(id);
+  if (!result) {
+    throw new ApiError("User not found", HttpStatus.NotFound);
+  }
+
+  if (result.deleted_at) {
+    throw new ApiError("User not found", HttpStatus.NotFound);
+  }
+
+  if (result.role === Roles.ADMIN) {
+    throw new ApiError("You can not delete admin", HttpStatus.BadRequest);
+  }
+
+  await authRepository.revokeAllUserSessions(id);
+  return result;
+};
+
+exports.deleteMeService = async (id) => {
+  const result = await userRepository.deleteUserById(id);
+  if (!result) {
+    throw new ApiError("User not found", HttpStatus.NotFound);
+  }
+
+  await authRepository.revokeAllUserSessions(id);
+  return result;
+};

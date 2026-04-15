@@ -6,6 +6,12 @@ exports.getUserByEmail = async (email) => {
   return await User.findOne({ where: { email } });
 };
 
+exports.getUserByEmailWithDeleted = async (email) => {
+  return await User.findOne({
+    where: { email },
+    paranoid: false,
+  });
+};
 exports.getUserById = async (id) => {
   return await User.findByPk(id);
 };

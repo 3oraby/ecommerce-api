@@ -1,34 +1,37 @@
 const User = require("./user.model");
 
-class UserRepository {
-  async createUser(userData) {
-    return await User.create(userData);
-  }
+exports.createUser = async (userData) => {
+  return await User.create(userData);
+};
 
-  async findByEmail(email) {
-    return await User.findOne({ where: { email } });
-  }
+exports.findByEmail = async (email) => {
+  return await User.findOne({ where: { email } });
+};
 
-  async findById(id) {
-    return await User.findByPk(id);
-  }
+exports.findByEmailWithDeleted = async (email) => {
+  return await User.findOne({
+    where: { email },
+    paranoid: false,
+  });
+};
 
-  async findAll() {
-    return await User.findAll({ attributes: { exclude: ["password"] } });
-  }
+exports.findById = async (id) => {
+  return await User.findByPk(id);
+};
 
-  async updateUser(id, updateData) {
-    const user = await User.findByPk(id);
-    if (!user) return null;
-    return await user.update(updateData);
-  }
+exports.findAll = async () => {
+  return await User.findAll({ attributes: { exclude: ["password"] } });
+};
 
-  async deleteUser(id) {
-    const user = await User.findByPk(id);
-    if (!user) return null;
-    await user.destroy();
-    return true;
-  }
-}
+exports.updateUserById = async (id, updateData) => {
+  const user = await User.findByPk(id);
+  if (!user) return null;
+  return await user.update(updateData);
+};
 
-module.exports = new UserRepository();
+exports.deleteUserById = async (id) => {
+  const user = await User.findByPk(id);
+  if (!user) return null;
+  await user.destroy();
+  return true;
+};

@@ -23,9 +23,16 @@ const checkUserExists = async (email, errMsg = "Invalid credentials") => {
 };
 
 const ensureUserNotExists = async (email, errMsg = "User already exists") => {
-  const user = await authRepository.getUserByEmail(email);
-  if (user) {
+  const user = await authRepository.getUserByEmailWithDeleted(email);
+  if (user && !user?.deleted_at) {
     throw new ApiError(errMsg, HttpStatus.Conflict);
+  }
+
+  if (user && user?.deleted_at) {
+    throw new ApiError(
+      "This account was deleted. Please restore your account instead of creating a new one.",
+      HttpStatus.Conflict,
+    );
   }
 };
 
