@@ -1,6 +1,7 @@
 const express = require("express");
 const authController = require("./auth.controller");
 const validate = require("../../middlewares/validate.middleware");
+const { authenticate } = require("../../middlewares/authenticate.middleware");
 const {
   signupValidation,
   loginValidation,
@@ -54,7 +55,7 @@ router.post(
 router.post("/logout", authController.logout);
 
 router.post("/refresh-token", authController.refreshToken);
-// update password
-// logoout all devices
+
+router.post("/logout-all-devices", authController.logoutAllDevices);
 
 module.exports = router;

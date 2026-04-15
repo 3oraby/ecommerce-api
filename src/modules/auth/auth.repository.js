@@ -91,7 +91,7 @@ exports.updateUserPassword = async (userId, newPassword) => {
 exports.revokeAllUserSessions = async (userId) => {
   return await RefreshToken.update(
     { is_revoked: true },
-    { where: { user_id: userId } },
+    { where: { user_id: userId, is_revoked: false } },
   );
 };
 
@@ -102,6 +102,6 @@ exports.findRefreshTokenByJti = async (jti) => {
 exports.revokeRefreshToken = async (jti) => {
   return await RefreshToken.update(
     { is_revoked: true },
-    { where: { jti } },
+    { where: { jti, is_revoked: false } },
   );
 };

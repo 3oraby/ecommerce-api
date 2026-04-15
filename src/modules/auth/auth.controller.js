@@ -137,3 +137,15 @@ exports.refreshToken = asyncHandler(async (req, res, next) => {
     accessToken,
   });
 });
+
+exports.logoutAllDevices = asyncHandler(async (req, res, next) => {
+  await authService.logoutAllDevicesService(req);
+
+  clearCookies(res);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Logged out from all devices successfully",
+  });
+});
