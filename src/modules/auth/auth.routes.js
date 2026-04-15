@@ -51,7 +51,8 @@ router.post(
   authController.resendPasswordResetOtp,
 );
 
-// logout
+router.post("/logout", authController.logout);
+
 // refresh token
 // update password
 // logoout all devices

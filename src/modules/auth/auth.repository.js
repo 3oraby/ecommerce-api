@@ -94,3 +94,14 @@ exports.revokeAllUserSessions = async (userId) => {
     { where: { user_id: userId } },
   );
 };
+
+exports.findRefreshTokenByJti = async (jti) => {
+  return await RefreshToken.findOne({ where: { jti } });
+};
+
+exports.revokeRefreshToken = async (jti) => {
+  return await RefreshToken.update(
+    { is_revoked: true },
+    { where: { jti } },
+  );
+};

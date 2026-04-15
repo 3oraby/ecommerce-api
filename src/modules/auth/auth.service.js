@@ -7,6 +7,7 @@ const {
   hashToken,
   generatePasswordResetToken,
   verifyPasswordResetToken,
+  verifyRefreshToken,
 } = require("./token.service");
 const { comparePassword } = require("../../utils/password.util");
 const AccountStatus = require("../../enums/accountStatus.enum");
@@ -269,4 +270,26 @@ exports.resendPasswordResetOtpService = async (req) => {
   }
 
   await sendPasswordResetEmail(user);
+};
+
+exports.logoutService = async (req) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (!refreshToken) {
+    throw new ApiError("No refresh token found", HttpStatus.Unauthorized);
+  }
+
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(refreshToken);
+  } catch (err) {
+    throw new ApiError("Invalid refresh token", HttpStatus.Unauthorized);
+  }
+
+  const tokenRecord = await authRepository.findRefreshTokenByJti(decoded.jti);
+  if (!tokenRecord || tokenRecord.is_revoked) {
+    throw new ApiError("Invalid refresh token", HttpStatus.Unauthorized);
+  }
+
+  await authRepository.revokeRefreshToken(decoded.jti);
 };

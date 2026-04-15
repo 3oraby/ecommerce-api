@@ -2,7 +2,7 @@ const asyncHandler = require("../../utils/asyncHandler");
 const authService = require("./auth.service");
 const sendResponse = require("../../utils/sendResponse");
 const HttpStatus = require("../../enums/httpStatus.enum");
-const { sendCookies } = require("./cookie.service");
+const { sendCookies, clearCookies } = require("./cookie.service");
 const { sanitizeUser } = require("../user/user.utils");
 
 const getRequestMeta = (req) => {
@@ -106,5 +106,17 @@ exports.resendPasswordResetOtp = asyncHandler(async (req, res, next) => {
     res,
     statusCode: HttpStatus.OK,
     message: "A new password reset code has been sent to your email",
+  });
+});
+
+exports.logout = asyncHandler(async (req, res, next) => {
+  await authService.logoutService(req);
+
+  clearCookies(res);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Logged out successfully",
   });
 });
