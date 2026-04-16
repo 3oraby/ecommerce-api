@@ -14,6 +14,7 @@ const path = require("path");
 const urlNotFoundMiddleware = require("./middlewares/urlNotFound.middleware");
 const userRouter = require("./modules/user/user.routes");
 const authRouter = require("./modules/auth/auth.routes");
+const countryRouter = require("./modules/countries/countries.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
 // app.set("trust proxy", true);
@@ -68,6 +69,7 @@ app.use(compression());
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/countries", countryRouter);
 
 // ERROR HANDLING
 
