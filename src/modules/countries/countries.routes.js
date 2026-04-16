@@ -1,5 +1,6 @@
 const express = require("express");
 const countriesController = require("./countries.controller");
+const statesRouter = require("../states/states.routes");
 const validate = require("../../middlewares/validate.middleware");
 const { restrictTo } = require("../../middlewares/restrictTo.middleware");
 const Roles = require("../../enums/roles.enum");
@@ -19,6 +20,8 @@ router.get(
   validate(countryIdParamsSchema),
   countriesController.getCountryById,
 );
+
+router.use("/:countryId/states", statesRouter);
 
 // --- ADMIN ONLY ---
 router.use(authenticate);

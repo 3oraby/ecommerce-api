@@ -19,6 +19,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete("countries", null, {});
+    await queryInterface.sequelize.query("TRUNCATE TABLE countries");
   },
 };
