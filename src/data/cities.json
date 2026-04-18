@@ -1,0 +1,790 @@
+{
+  "EG": {
+    "Cairo": [
+      "Nasr City",
+      "Maadi",
+      "Heliopolis",
+      "Shubra"
+    ],
+    "Alexandria": [
+      "Smouha",
+      "Sidi Gaber",
+      "Stanley",
+      "Montaza"
+    ],
+    "Giza": [
+      "Dokki",
+      "Mohandessin",
+      "Haram",
+      "6th of October"
+    ],
+    "Dakahlia": [
+      "Mansoura",
+      "Talkha",
+      "Mit Ghamr",
+      "Belqas"
+    ],
+    "Red Sea": [
+      "Hurghada",
+      "Safaga",
+      "Marsa Alam",
+      "El Quseir"
+    ],
+    "Suez": [
+      "Suez",
+      "Faisal",
+      "Arbaeen",
+      "Attaka"
+    ],
+    "Port Said": [
+      "Port Said",
+      "Port Fouad",
+      "El Arab",
+      "El Dawahy"
+    ]
+  },
+  "SA": {
+    "Riyadh": [
+      "Riyadh",
+      "Diriyah",
+      "Al Kharj",
+      "Al Majmaah"
+    ],
+    "Makkah": [
+      "Mecca",
+      "Jeddah",
+      "Taif",
+      "Rabigh"
+    ],
+    "Eastern Province": [
+      "Dammam",
+      "Khobar",
+      "Dhahran",
+      "Jubail"
+    ],
+    "Madinah": [
+      "Medina",
+      "Yanbu",
+      "Badr",
+      "Al Ula"
+    ],
+    "Asir": [
+      "Abha",
+      "Khamis Mushait",
+      "Ahad Rafidah",
+      "Sarat Abidah"
+    ],
+    "Najran": [
+      "Najran",
+      "Sharurah",
+      "Habona",
+      "Yadamah"
+    ]
+  },
+  "AE": {
+    "Abu Dhabi": [
+      "Abu Dhabi",
+      "Al Ain",
+      "Madinat Zayed",
+      "Ruwais"
+    ],
+    "Dubai": [
+      "Deira",
+      "Bur Dubai",
+      "Jumeirah",
+      "Dubai Marina"
+    ],
+    "Sharjah": [
+      "Sharjah",
+      "Khor Fakkan",
+      "Kalba",
+      "Dhaid"
+    ],
+    "Ajman": [
+      "Ajman",
+      "Masfout",
+      "Manama",
+      "Al Jurf"
+    ],
+    "Ras Al Khaimah": [
+      "Ras Al Khaimah",
+      "Al Hamra",
+      "Digdaga",
+      "Khatt"
+    ]
+  },
+  "QA": {
+    "Doha": [
+      "West Bay",
+      "Al Sadd",
+      "The Pearl",
+      "Lusail"
+    ],
+    "Al Rayyan": [
+      "Al Rayyan",
+      "Al Wajba",
+      "Old Rayyan",
+      "Al Shahaniya"
+    ],
+    "Al Wakrah": [
+      "Al Wakrah",
+      "Mesaieed",
+      "Al Wukair",
+      "Abu Samra"
+    ],
+    "Al Khor": [
+      "Al Khor",
+      "Al Thakhira",
+      "Ras Laffan",
+      "Al Ghuwairiya"
+    ]
+  },
+  "KW": {
+    "Kuwait City": [
+      "Sharq",
+      "Qibla",
+      "Mirqab",
+      "Dasman"
+    ],
+    "Hawalli": [
+      "Hawalli",
+      "Salmiya",
+      "Jabriya",
+      "Rumaithiya"
+    ],
+    "Al Ahmadi": [
+      "Ahmadi",
+      "Fahaheel",
+      "Mangaf",
+      "Sabah Al Ahmad"
+    ],
+    "Jahra": [
+      "Jahra",
+      "Taima",
+      "Naeem",
+      "Qasr"
+    ]
+  },
+  "BH": {
+    "Capital": [
+      "Manama",
+      "Juffair",
+      "Seef",
+      "Adliya"
+    ],
+    "Muharraq": [
+      "Muharraq",
+      "Hidd",
+      "Arad",
+      "Busaiteen"
+    ],
+    "Northern": [
+      "Aali",
+      "Budaiya",
+      "Diraz",
+      "Barbar"
+    ],
+    "Southern": [
+      "Riffa",
+      "Isa Town",
+      "Zallaq",
+      "Sakhir"
+    ]
+  },
+  "OM": {
+    "Muscat": [
+      "Muscat",
+      "Muttrah",
+      "Seeb",
+      "Bawshar"
+    ],
+    "Dhofar": [
+      "Salalah",
+      "Taqah",
+      "Mirbat",
+      "Thumrait"
+    ],
+    "Ad Dakhiliyah": [
+      "Nizwa",
+      "Bahla",
+      "Adam",
+      "Izki"
+    ]
+  },
+  "JO": {
+    "Amman": [
+      "Abdoun",
+      "Jabal Amman",
+      "Sweifieh",
+      "Khalda"
+    ],
+    "Zarqa": [
+      "Zarqa",
+      "Russeifa",
+      "Azraq",
+      "Dhlail"
+    ],
+    "Irbid": [
+      "Irbid",
+      "Ramtha",
+      "Kufr Yuba",
+      "Bani Kinanah"
+    ],
+    "Aqaba": [
+      "Aqaba",
+      "Quweira",
+      "Wadi Rum",
+      "Dissi"
+    ]
+  },
+  "LB": {
+    "Beirut": [
+      "Hamra",
+      "Achrafieh",
+      "Verdun",
+      "Ras Beirut"
+    ],
+    "Mount Lebanon": [
+      "Jounieh",
+      "Baabda",
+      "Aley",
+      "Byblos"
+    ],
+    "North Lebanon": [
+      "Tripoli",
+      "Zgharta",
+      "Batroun",
+      "Akkar"
+    ],
+    "South Lebanon": [
+      "Sidon",
+      "Tyre",
+      "Nabatieh",
+      "Jezzine"
+    ]
+  },
+  "IQ": {
+    "Baghdad": [
+      "Karkh",
+      "Rusafa",
+      "Adhamiya",
+      "Sadr City"
+    ],
+    "Basra": [
+      "Basra",
+      "Zubair",
+      "Abu Al-Khasib",
+      "Fao"
+    ],
+    "Erbil": [
+      "Erbil",
+      "Ankawa",
+      "Shaqlawa",
+      "Koya"
+    ],
+    "Nineveh": [
+      "Mosul",
+      "Tal Afar",
+      "Sinjar",
+      "Hamdaniya"
+    ]
+  },
+  "US": {
+    "California": [
+      "Los Angeles",
+      "San Diego",
+      "San Jose",
+      "San Francisco"
+    ],
+    "Texas": [
+      "Houston",
+      "Dallas",
+      "Austin",
+      "San Antonio"
+    ],
+    "Florida": [
+      "Miami",
+      "Orlando",
+      "Tampa",
+      "Jacksonville"
+    ],
+    "New York": [
+      "New York City",
+      "Buffalo",
+      "Rochester",
+      "Albany"
+    ],
+    "Illinois": [
+      "Chicago",
+      "Aurora",
+      "Naperville",
+      "Springfield"
+    ],
+    "Washington": [
+      "Seattle",
+      "Spokane",
+      "Tacoma",
+      "Vancouver"
+    ],
+    "Colorado": [
+      "Denver",
+      "Boulder",
+      "Aurora",
+      "Colorado Springs"
+    ]
+  },
+  "CA": {
+    "Ontario": [
+      "Toronto",
+      "Ottawa",
+      "Mississauga",
+      "Hamilton"
+    ],
+    "Quebec": [
+      "Montreal",
+      "Quebec City",
+      "Laval",
+      "Gatineau"
+    ],
+    "British Columbia": [
+      "Vancouver",
+      "Victoria",
+      "Surrey",
+      "Burnaby"
+    ],
+    "Alberta": [
+      "Calgary",
+      "Edmonton",
+      "Red Deer",
+      "Lethbridge"
+    ]
+  },
+  "MX": {
+    "Mexico City": [
+      "Coyoacan",
+      "Tlalpan",
+      "Xochimilco",
+      "Iztapalapa"
+    ],
+    "Jalisco": [
+      "Guadalajara",
+      "Zapopan",
+      "Tlaquepaque",
+      "Puerto Vallarta"
+    ],
+    "Nuevo León": [
+      "Monterrey",
+      "San Nicolas",
+      "Guadalupe",
+      "Apodaca"
+    ],
+    "Yucatán": [
+      "Merida",
+      "Valladolid",
+      "Tizimin",
+      "Progreso"
+    ],
+    "Quintana Roo": [
+      "Cancun",
+      "Playa del Carmen",
+      "Cozumel",
+      "Tulum"
+    ]
+  },
+  "BR": {
+    "São Paulo": [
+      "São Paulo City",
+      "Campinas",
+      "Santos",
+      "Sorocaba"
+    ],
+    "Rio de Janeiro": [
+      "Rio de Janeiro",
+      "Niteroi",
+      "Petropolis",
+      "Campos"
+    ],
+    "Bahia": [
+      "Salvador",
+      "Feira de Santana",
+      "Ilheus",
+      "Vitoria da Conquista"
+    ],
+    "Minas Gerais": [
+      "Belo Horizonte",
+      "Uberlandia",
+      "Contagem",
+      "Juiz de Fora"
+    ]
+  },
+  "AR": {
+    "Buenos Aires": [
+      "La Plata",
+      "Mar del Plata",
+      "Bahia Blanca",
+      "Quilmes"
+    ],
+    "Córdoba": [
+      "Cordoba City",
+      "Villa Carlos Paz",
+      "Rio Cuarto",
+      "Alta Gracia"
+    ],
+    "Santa Fe": [
+      "Rosario",
+      "Santa Fe City",
+      "Rafaela",
+      "Reconquista"
+    ],
+    "Mendoza": [
+      "Mendoza City",
+      "San Rafael",
+      "Godoy Cruz",
+      "Lujan de Cuyo"
+    ]
+  },
+  "CL": {
+    "Santiago": [
+      "Santiago",
+      "Puente Alto",
+      "Maipú",
+      "La Florida"
+    ],
+    "Valparaíso": [
+      "Valparaíso",
+      "Viña del Mar",
+      "Quilpué",
+      "Villa Alemana"
+    ],
+    "Antofagasta": [
+      "Antofagasta",
+      "Calama",
+      "Tocopilla",
+      "Mejillones"
+    ],
+    "Biobío": [
+      "Concepción",
+      "Talcahuano",
+      "Los Ángeles",
+      "Chillán"
+    ]
+  },
+  "CO": {
+    "Bogotá": [
+      "Bogotá",
+      "Soacha",
+      "Chía",
+      "Zipaquirá"
+    ],
+    "Antioquia": [
+      "Medellín",
+      "Envigado",
+      "Itagüí",
+      "Bello"
+    ],
+    "Valle del Cauca": [
+      "Cali",
+      "Palmira",
+      "Buenaventura",
+      "Tuluá"
+    ],
+    "Cundinamarca": [
+      "Soacha",
+      "Girardot",
+      "Facatativá",
+      "Fusagasugá"
+    ]
+  },
+  "PE": {
+    "Lima": [
+      "Lima",
+      "Callao",
+      "Miraflores",
+      "San Isidro"
+    ],
+    "Cusco": [
+      "Cusco",
+      "Sicuani",
+      "Quillabamba",
+      "Urubamba"
+    ],
+    "Arequipa": [
+      "Arequipa",
+      "Camaná",
+      "Mollendo",
+      "Majes"
+    ],
+    "Piura": [
+      "Piura",
+      "Sullana",
+      "Talara",
+      "Paita"
+    ]
+  },
+  "GB": {
+    "England": [
+      "London",
+      "Manchester",
+      "Birmingham",
+      "Liverpool"
+    ],
+    "Scotland": [
+      "Edinburgh",
+      "Glasgow",
+      "Aberdeen",
+      "Dundee"
+    ],
+    "Wales": [
+      "Cardiff",
+      "Swansea",
+      "Newport",
+      "Wrexham"
+    ],
+    "Northern Ireland": [
+      "Belfast",
+      "Derry",
+      "Lisburn",
+      "Newry"
+    ]
+  },
+  "DE": {
+    "Bavaria": [
+      "Munich",
+      "Nuremberg",
+      "Augsburg",
+      "Regensburg"
+    ],
+    "Berlin": [
+      "Berlin",
+      "Spandau",
+      "Neukölln",
+      "Pankow"
+    ],
+    "Hamburg": [
+      "Hamburg",
+      "Altona",
+      "Harburg",
+      "Bergedorf"
+    ],
+    "North Rhine-Westphalia": [
+      "Cologne",
+      "Düsseldorf",
+      "Dortmund",
+      "Essen"
+    ]
+  },
+  "FR": {
+    "Île-de-France": [
+      "Paris",
+      "Boulogne-Billancourt",
+      "Saint-Denis",
+      "Versailles"
+    ],
+    "Provence-Alpes-Côte d'Azur": [
+      "Marseille",
+      "Nice",
+      "Toulon",
+      "Avignon"
+    ],
+    "Auvergne-Rhône-Alpes": [
+      "Lyon",
+      "Grenoble",
+      "Saint-Étienne",
+      "Clermont-Ferrand"
+    ],
+    "Normandy": [
+      "Rouen",
+      "Caen",
+      "Le Havre",
+      "Cherbourg"
+    ]
+  },
+  "IT": {
+    "Lombardy": [
+      "Milan",
+      "Bergamo",
+      "Brescia",
+      "Monza"
+    ],
+    "Lazio": [
+      "Rome",
+      "Latina",
+      "Frosinone",
+      "Viterbo"
+    ],
+    "Campania": [
+      "Naples",
+      "Salerno",
+      "Caserta",
+      "Avellino"
+    ],
+    "Sicily": [
+      "Palermo",
+      "Catania",
+      "Messina",
+      "Syracuse"
+    ]
+  },
+  "ES": {
+    "Madrid": [
+      "Madrid",
+      "Alcalá de Henares",
+      "Getafe",
+      "Leganés"
+    ],
+    "Catalonia": [
+      "Barcelona",
+      "Girona",
+      "Lleida",
+      "Tarragona"
+    ],
+    "Andalusia": [
+      "Seville",
+      "Málaga",
+      "Granada",
+      "Córdoba"
+    ],
+    "Galicia": [
+      "Santiago de Compostela",
+      "Vigo",
+      "A Coruña",
+      "Lugo"
+    ]
+  },
+  "TR": {
+    "Istanbul": [
+      "Istanbul",
+      "Kadıköy",
+      "Beşiktaş",
+      "Üsküdar"
+    ],
+    "Ankara": [
+      "Ankara",
+      "Çankaya",
+      "Keçiören",
+      "Mamak"
+    ],
+    "Izmir": [
+      "Izmir",
+      "Konak",
+      "Karşıyaka",
+      "Bornova"
+    ],
+    "Antalya": [
+      "Antalya",
+      "Alanya",
+      "Manavgat",
+      "Kemer"
+    ]
+  },
+  "IN": {
+    "Maharashtra": [
+      "Mumbai",
+      "Pune",
+      "Nagpur",
+      "Nashik"
+    ],
+    "Delhi": [
+      "New Delhi",
+      "Dwarka",
+      "Rohini",
+      "Saket"
+    ],
+    "Karnataka": [
+      "Bangalore",
+      "Mysore",
+      "Mangalore",
+      "Hubli"
+    ],
+    "Tamil Nadu": [
+      "Chennai",
+      "Coimbatore",
+      "Madurai",
+      "Salem"
+    ],
+    "Gujarat": [
+      "Ahmedabad",
+      "Surat",
+      "Vadodara",
+      "Rajkot"
+    ]
+  },
+  "NG": {
+    "Lagos": [
+      "Lagos",
+      "Ikeja",
+      "Epe",
+      "Badagry"
+    ],
+    "Abuja": [
+      "Abuja",
+      "Gwagwalada",
+      "Kuje",
+      "Kwali"
+    ],
+    "Kano": [
+      "Kano",
+      "Wudil",
+      "Gwarzo",
+      "Bichi"
+    ],
+    "Rivers": [
+      "Port Harcourt",
+      "Obio-Akpor",
+      "Bonny",
+      "Okrika"
+    ]
+  },
+  "KE": {
+    "Nairobi": [
+      "Nairobi",
+      "Westlands",
+      "Embakasi",
+      "Kasarani"
+    ],
+    "Mombasa": [
+      "Mombasa",
+      "Likoni",
+      "Nyali",
+      "Kisauni"
+    ],
+    "Kisumu": [
+      "Kisumu",
+      "Ahero",
+      "Maseno",
+      "Muhoroni"
+    ],
+    "Nakuru": [
+      "Nakuru",
+      "Naivasha",
+      "Gilgil",
+      "Molo"
+    ]
+  },
+  "GH": {
+    "Greater Accra": [
+      "Accra",
+      "Tema",
+      "Madina",
+      "Teshie"
+    ],
+    "Ashanti": [
+      "Kumasi",
+      "Obuasi",
+      "Ejisu",
+      "Mampong"
+    ],
+    "Western": [
+      "Sekondi-Takoradi",
+      "Tarkwa",
+      "Axim",
+      "Prestea"
+    ],
+    "Northern": [
+      "Tamale",
+      "Yendi",
+      "Savelugu",
+      "Walewale"
+    ]
+  }
+}

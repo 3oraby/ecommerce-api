@@ -15,6 +15,8 @@ const urlNotFoundMiddleware = require("./middlewares/urlNotFound.middleware");
 const userRouter = require("./modules/user/user.routes");
 const authRouter = require("./modules/auth/auth.routes");
 const countryRouter = require("./modules/countries/countries.routes");
+const stateRouter = require("./modules/states/states.routes");
+const cityRouter = require("./modules/cities/cities.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
 // app.set("trust proxy", true);
@@ -67,9 +69,26 @@ app.use(compression());
 
 // ROUTES
 
+const printInStateRouteMiddleware = (req, res, next) => {
+  console.log("here in state router");
+  next();
+};
+
+const printInCityRouteMiddleware = (req, res, next) => {
+  console.log("here in city router");
+  next();
+};
+
+const printInCountryRouteMiddleware = (req, res, next) => {
+  console.log("here in country router");
+  next();
+};
+
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/countries", countryRouter);
+app.use("/api/v1/countries", printInCountryRouteMiddleware, countryRouter);
+app.use("/api/v1/states", printInStateRouteMiddleware, stateRouter);
+app.use("/api/v1/cities", printInCityRouteMiddleware, cityRouter);
 
 // ERROR HANDLING
 
