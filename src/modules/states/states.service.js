@@ -5,7 +5,10 @@ const HttpStatus = require("../../enums/httpStatus.enum");
 
 const normalizeName = (name) => {
   if (!name) return name;
-  return name.trim().toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 exports.createStateService = async (req) => {
@@ -15,7 +18,7 @@ exports.createStateService = async (req) => {
 
   // Validate country_id format and existence
   if (!countryId || isNaN(Number(countryId))) {
-      throw new ApiError("Invalid country_id", HttpStatus.UnprocessableEntity);
+    throw new ApiError("Invalid country_id", HttpStatus.UnprocessableEntity);
   }
 
   const country = await countriesRepository.findCountryById(countryId);
@@ -23,7 +26,10 @@ exports.createStateService = async (req) => {
     throw new ApiError("Country not found", HttpStatus.NotFound);
   }
 
-  const existingState = await statesRepository.findStateByCountryAndName(countryId, normalizedName);
+  const existingState = await statesRepository.findStateByCountryAndName(
+    countryId,
+    normalizedName,
+  );
   if (existingState) {
     throw new ApiError("Duplicate state in same country", HttpStatus.Conflict);
   }
@@ -40,9 +46,9 @@ exports.getStatesService = async () => {
 
 exports.getStatesByCountryService = async (req) => {
   const { countryId } = req.params;
-  
+
   if (!countryId || isNaN(Number(countryId))) {
-      throw new ApiError("Invalid country_id", HttpStatus.UnprocessableEntity);
+    throw new ApiError("Invalid country_id", HttpStatus.UnprocessableEntity);
   }
 
   const country = await countriesRepository.findCountryById(countryId);
@@ -54,13 +60,10 @@ exports.getStatesByCountryService = async (req) => {
 };
 
 exports.getStateByIdService = async (req) => {
-  const { id, countryId } = req.params;
+  const { id } = req.params;
   const state = await statesRepository.getStateById(id);
   if (!state) {
     throw new ApiError("State not found", HttpStatus.NotFound);
-  }
-  if (Number(state.country_id) !== Number(countryId)) {
-    throw new ApiError("State does not belong to this country", HttpStatus.UnprocessableEntity);
   }
   return state;
 };
@@ -79,14 +82,20 @@ exports.updateStateService = async (req) => {
 
   // We enforce the state being updated belongs to the country in the route
   if (Number(finalCountryId) !== Number(countryId)) {
-    throw new ApiError("State does not belong to this country", HttpStatus.UnprocessableEntity);
+    throw new ApiError(
+      "State does not belong to this country",
+      HttpStatus.UnprocessableEntity,
+    );
   }
 
   if (name) {
     finalName = normalizeName(name);
   }
 
-  const existingState = await statesRepository.findStateByCountryAndName(finalCountryId, finalName);
+  const existingState = await statesRepository.findStateByCountryAndName(
+    finalCountryId,
+    finalName,
+  );
   if (existingState && existingState.id !== Number(id)) {
     throw new ApiError("Duplicate state in same country", HttpStatus.Conflict);
   }
@@ -105,7 +114,10 @@ exports.deleteStateService = async (req) => {
     throw new ApiError("State not found", HttpStatus.NotFound);
   }
   if (Number(state.country_id) !== Number(countryId)) {
-    throw new ApiError("State does not belong to this country", HttpStatus.UnprocessableEntity);
+    throw new ApiError(
+      "State does not belong to this country",
+      HttpStatus.UnprocessableEntity,
+    );
   }
 
   const result = await statesRepository.deleteState(id);

@@ -28,7 +28,19 @@ exports.updateStateSchema = z.object({
 
 exports.stateIdParamsSchema = z.object({
   params: z.object({
+    id: z.string().regex(/^\d+$/, "ID must be a numeric string"),
+  }),
+});
+
+exports.getStatesByCountryParamsSchema = z.object({
+  params: z.object({
     countryId: z.string().regex(/^\d+$/, "Country ID must be a numeric string"),
     id: z.string().regex(/^\d+$/, "ID must be a numeric string"),
+  }),
+});
+
+exports.countryIdParamsSchema = z.object({
+  params: z.object({
+    countryId: z.string().regex(/^\d+$/, "Country ID must be a numeric string"),
   }),
 });
