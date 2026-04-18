@@ -69,26 +69,11 @@ app.use(compression());
 
 // ROUTES
 
-const printInStateRouteMiddleware = (req, res, next) => {
-  console.log("here in state router");
-  next();
-};
-
-const printInCityRouteMiddleware = (req, res, next) => {
-  console.log("here in city router");
-  next();
-};
-
-const printInCountryRouteMiddleware = (req, res, next) => {
-  console.log("here in country router");
-  next();
-};
-
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/countries", printInCountryRouteMiddleware, countryRouter);
-app.use("/api/v1/states", printInStateRouteMiddleware, stateRouter);
-app.use("/api/v1/cities", printInCityRouteMiddleware, cityRouter);
+app.use("/api/v1/countries", countryRouter);
+app.use("/api/v1/states", stateRouter);
+app.use("/api/v1/cities", cityRouter);
 
 // ERROR HANDLING
 
