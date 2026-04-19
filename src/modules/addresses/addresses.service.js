@@ -5,8 +5,7 @@ const citiesRepository = require("../cities/cities.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 
-exports.createAddressService = async (userId, data) => {
-  // Validate relations
+const checkAddressRelations = async (data) => {
   const country = await countriesRepository.findCountryById(data.country_id);
   if (!country) throw new ApiError("Country not found", HttpStatus.BadRequest);
 
@@ -25,6 +24,22 @@ exports.createAddressService = async (userId, data) => {
       HttpStatus.BadRequest,
     );
   }
+};
+
+const getAndValidateAddressOwnership = async (addressId, userId) => {
+  const address = await addressesRepository.getAddressById(addressId);
+  if (!address) throw new ApiError("Address not found", HttpStatus.NotFound);
+  if (Number(address.user_id) !== Number(userId)) {
+    throw new ApiError(
+      "Unauthorized to access this address",
+      HttpStatus.Forbidden,
+    );
+  }
+  return address;
+};
+
+exports.createAddressService = async (userId, data) => {
+  await checkAddressRelations(data);
 
   // Prevent exact duplicate address
   const existingAddress = await addressesRepository.findExactAddress(
@@ -48,11 +63,14 @@ exports.createAddressService = async (userId, data) => {
 
   const shouldReset = isDefault && addressCount > 0;
 
-  return await addressesRepository.createAddress({
-    ...data,
-    user_id: userId,
-    is_default: isDefault,
-  }, shouldReset);
+  return await addressesRepository.createAddress(
+    {
+      ...data,
+      user_id: userId,
+      is_default: isDefault,
+    },
+    shouldReset,
+  );
 };
 
 exports.getUserAddressesService = async (userId) => {
@@ -60,67 +78,32 @@ exports.getUserAddressesService = async (userId) => {
 };
 
 exports.getAddressByIdService = async (id, userId) => {
-  const address = await addressesRepository.getAddressById(id);
-  if (!address) throw new ApiError("Address not found", HttpStatus.NotFound);
-  if (Number(address.user_id) !== Number(userId)) {
-    throw new ApiError(
-      "Unauthorized to access this address",
-      HttpStatus.Forbidden,
-    );
-  }
-  return address;
+  return await getAndValidateAddressOwnership(id, userId);
 };
 
 exports.updateAddressService = async (id, userId, data) => {
-  const address = await addressesRepository.getAddressById(id);
-  if (!address) throw new ApiError("Address not found", HttpStatus.NotFound);
-  if (Number(address.user_id) !== Number(userId)) {
-    throw new ApiError(
-      "Unauthorized to update this address",
-      HttpStatus.Forbidden,
-    );
-  }
+  const address = await getAndValidateAddressOwnership(id, userId);
 
   const finalCountryId = data.country_id || address.country_id;
   const finalStateId = data.state_id || address.state_id;
   const finalCityId = data.city_id || address.city_id;
 
-  // Validate relational integrity if location details are updated
-  if (data.country_id || data.state_id || data.city_id) {
-    const state = await statesRepository.getStateById(finalStateId);
-    if (!state || Number(state.country_id) !== Number(finalCountryId)) {
-      throw new ApiError(
-        "State doesn't belong to the country",
-        HttpStatus.BadRequest,
-      );
-    }
-    const city = await citiesRepository.getCityById(finalCityId);
-    if (!city || Number(city.state_id) !== Number(finalStateId)) {
-      throw new ApiError(
-        "City doesn't belong to the state",
-        HttpStatus.BadRequest,
-      );
-    }
-  }
+  await checkAddressRelations({
+    country_id: finalCountryId,
+    state_id: finalStateId,
+    city_id: finalCityId,
+  });
 
   return await addressesRepository.updateAddress(id, data);
 };
 
 exports.deleteAddressService = async (id, userId) => {
-  const address = await addressesRepository.getAddressById(id);
-  if (!address) throw new ApiError("Address not found", HttpStatus.NotFound);
-  if (Number(address.user_id) !== Number(userId)) {
-    throw new ApiError(
-      "Unauthorized to delete this address",
-      HttpStatus.Forbidden,
-    );
-  }
+  const address = await getAndValidateAddressOwnership(id, userId);
 
   if (!address.is_default) {
     return await addressesRepository.deleteAddress(id);
   }
 
-  // ✅ Handle Default Deletion Strategy
   const allAddresses = await addressesRepository.getUserAddresses(userId);
 
   if (allAddresses.length <= 1) {
@@ -141,14 +124,7 @@ exports.deleteAddressService = async (id, userId) => {
 };
 
 exports.setDefaultAddressService = async (id, userId) => {
-  const address = await addressesRepository.getAddressById(id);
-  if (!address) throw new ApiError("Address not found", HttpStatus.NotFound);
-  if (Number(address.user_id) !== Number(userId)) {
-    throw new ApiError(
-      "Unauthorized to update this address",
-      HttpStatus.Forbidden,
-    );
-  }
+  const address = await getAndValidateAddressOwnership(id, userId);
 
   if (address.is_default) {
     throw new ApiError("Address is already the default", HttpStatus.BadRequest);
