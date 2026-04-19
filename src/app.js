@@ -17,6 +17,7 @@ const authRouter = require("./modules/auth/auth.routes");
 const countryRouter = require("./modules/countries/countries.routes");
 const stateRouter = require("./modules/states/states.routes");
 const cityRouter = require("./modules/cities/cities.routes");
+const addressRouter = require("./modules/addresses/addresses.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
 // app.set("trust proxy", true);
@@ -74,6 +75,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/countries", countryRouter);
 app.use("/api/v1/states", stateRouter);
 app.use("/api/v1/cities", cityRouter);
+app.use("/api/v1/addresses", addressRouter);
 
 // ERROR HANDLING
 
