@@ -1,0 +1,12 @@
+[
+  { "name": "Electronics", "description": "Devices, smartphones, laptops and gadgets" },
+  { "name": "Clothing", "description": "Men and women fashion الملابس" },
+  { "name": "Home & Kitchen", "description": "Furniture, kitchen tools, and home essentials" },
+  { "name": "Beauty & Personal Care", "description": "Cosmetics, skincare, and hygiene products" },
+  { "name": "Sports & Fitness", "description": "Sports equipment and fitness accessories" },
+  { "name": "Books", "description": "Educational, novels, and all kinds of books" },
+  { "name": "Toys & Games", "description": "Kids toys and entertainment products" },
+  { "name": "Automotive", "description": "Car accessories and automotive tools" },
+  { "name": "Mobile Accessories", "description": "Covers, chargers, headphones, and more" },
+  { "name": "Office Supplies", "description": "Stationery and office essentials" }
+]

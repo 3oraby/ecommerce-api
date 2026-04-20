@@ -18,6 +18,7 @@ const countryRouter = require("./modules/countries/countries.routes");
 const stateRouter = require("./modules/states/states.routes");
 const cityRouter = require("./modules/cities/cities.routes");
 const addressRouter = require("./modules/addresses/addresses.routes");
+const categoryRouter = require("./modules/categories/categories.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
 // app.set("trust proxy", true);
@@ -69,13 +70,13 @@ app.use(compression());
 // app.use(express.static(path.join(__dirname, "public")));
 
 // ROUTES
-
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/countries", countryRouter);
 app.use("/api/v1/states", stateRouter);
 app.use("/api/v1/cities", cityRouter);
 app.use("/api/v1/addresses", addressRouter);
+app.use("/api/v1/categories", categoryRouter);
 
 // ERROR HANDLING
 
