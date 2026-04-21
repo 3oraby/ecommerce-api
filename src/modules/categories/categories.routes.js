@@ -9,8 +9,11 @@ const {
   updateCategorySchema,
   paramsSchema,
 } = require("./categories.validation");
+const productsRouter = require("../products/products.routes");
 
 const router = express.Router();
+
+router.use("/:categoryId/products", productsRouter);
 
 // --- PUBLIC ---
 router.get("/", categoriesController.getAllCategories);

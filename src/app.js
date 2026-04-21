@@ -20,6 +20,7 @@ const cityRouter = require("./modules/cities/cities.routes");
 const addressRouter = require("./modules/addresses/addresses.routes");
 const categoryRouter = require("./modules/categories/categories.routes");
 const sellerRouter = require("./modules/sellers/sellers.routes");
+const productRouter = require("./modules/products/products.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
 // app.set("trust proxy", true);
@@ -79,6 +80,7 @@ app.use("/api/v1/cities", cityRouter);
 app.use("/api/v1/addresses", addressRouter);
 app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/sellers", sellerRouter);
+app.use("/api/v1/products", productRouter);
 
 // ERROR HANDLING
 

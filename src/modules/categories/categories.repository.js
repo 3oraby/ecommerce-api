@@ -5,6 +5,16 @@ exports.findAll = async () => {
   return await Category.findAll();
 };
 
+exports.findByIds = async (ids) => {
+  return await Category.findAll({
+    where: {
+      id: {
+        [Op.in]: ids,
+      },
+    },
+  });
+};
+
 exports.findByPk = async (id) => {
   return await Category.findByPk(id);
 };
