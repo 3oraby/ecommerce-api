@@ -36,6 +36,38 @@ exports.findAll = async ({
   return await Product.findAndCountAll(options);
 };
 
+exports.createProductWithCategoriesAndImages = async (
+  productData,
+  categoryIds,
+  productImages,
+) => {
+  return await sequelize.transaction(async (t) => {
+    const product = await Product.create(productData, {
+      transaction: t,
+    });
+
+    if (categoryIds?.length) {
+      const records = categoryIds.map((catId) => ({
+        product_id: product.id,
+        category_id: catId,
+      }));
+
+      await ProductCategory.bulkCreate(records, { transaction: t });
+    }
+
+    if (productImages?.length) {
+      const images = productImages.map((img) => ({
+        ...img,
+        product_id: product.id,
+      }));
+
+      await ProductImage.bulkCreate(images, { transaction: t });
+    }
+
+    return product;
+  });
+};
+
 exports.findWithCategoriesOrSearch = async ({
   where = {},
   parsedSort,
