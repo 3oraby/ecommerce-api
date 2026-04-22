@@ -5,6 +5,60 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const { sanitizeAndValidateIds } = require("../../utils/array.util");
 const { Op } = require("sequelize");
+const Roles = require("../../enums/roles.enum");
+
+const buildProductQuery = (query, user) => {
+  const filterParams = { ...query };
+
+  const searchKeyword = query.q || query.keyword;
+  const categoryId = query.category;
+
+  const excluded = [
+    "q",
+    "keyword",
+    "category",
+    "minPrice",
+    "maxPrice",
+    "inStock",
+  ];
+  excluded.forEach((el) => delete filterParams[el]);
+
+  if (user && user.role === Roles.SELLER && user.sellerProfile) {
+    filterParams.seller_id = user.sellerProfile.id;
+  }
+
+  const features = new ApiFeatures({}, filterParams)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const where = { ...(features.parsedFilters || {}) };
+
+  if (query.minPrice || query.maxPrice) {
+    where.price = {};
+    if (query.minPrice) where.price[Op.gte] = Number(query.minPrice);
+    if (query.maxPrice) where.price[Op.lte] = Number(query.maxPrice);
+  }
+
+  if (query.rating) {
+    where.rating = { [Op.gte]: Number(query.rating) };
+  }
+
+  if (query.inStock === "true") {
+    where.stock = { [Op.gt]: 0 };
+  }
+
+  return {
+    where,
+    parsedSort: features.parsedSort,
+    parsedAttributes: features.parsedAttributes,
+    parsedPagination: features.parsedPagination,
+    searchKeyword,
+    categoryId,
+  };
+};
+
 
 exports.getProductById = async (id) => {
   const product = await productsRepository.findById(id);
@@ -22,28 +76,35 @@ exports.getProductsByCategory = async (categoryId, user, query) => {
     throw new ApiError("Category not found", HttpStatus.NotFound);
   }
 
-  const filterParams = { ...query };
+  const builtQuery = buildProductQuery(query, user);
+  builtQuery.categoryId = categoryId;
 
-  if (user && user.role === "SELLER" && user.sellerProfile) {
-    filterParams.seller_id = user.sellerProfile.id;
-  }
-
-  const features = new ApiFeatures({}, filterParams)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  const products = await productsRepository.findWithCategoriesOrSearch({
-    ...features,
-    categoryId,
-  });
+  const products =
+    await productsRepository.findWithCategoriesOrSearch(builtQuery);
 
   if (!products.data || products.total === 0) {
     return {
       total: 0,
       page: 1,
-      limit: features.parsedPagination.limit,
+      limit: builtQuery.parsedPagination.limit,
+      data: [],
+    };
+  }
+
+  return products;
+};
+
+exports.getSellerProducts = async (user, query) => {
+  const builtQuery = buildProductQuery(query, user);
+
+  const products =
+    await productsRepository.findWithCategoriesOrSearch(builtQuery);
+
+  if (!products.data || products.total === 0) {
+    return {
+      total: 0,
+      page: 1,
+      limit: builtQuery.parsedPagination.limit,
       data: [],
     };
   }
@@ -52,63 +113,9 @@ exports.getProductsByCategory = async (categoryId, user, query) => {
 };
 
 exports.searchProducts = async (query, user) => {
-  const filterParams = { ...query };
+  const builtQuery = buildProductQuery(query, user);
 
-  const searchKeyword = query.q || query.keyword;
-  const categoryId = query.category;
-
-  const excluded = [
-    "q",
-    "keyword",
-    "category",
-    "minPrice",
-    "maxPrice",
-    "inStock",
-  ];
-  excluded.forEach((el) => delete filterParams[el]);
-
-  if (user && user.role === "SELLER" && user.sellerProfile) {
-    filterParams.seller_id = user.sellerProfile.id;
-  }
-
-  const features = new ApiFeatures({}, filterParams)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  const where = { ...(features.parsedFilters || {}) };
-
-  if (query.minPrice || query.maxPrice) {
-    where.price = {};
-    if (query.minPrice) {
-      where.price[Op.gte] = Number(query.minPrice);
-    }
-    if (query.maxPrice) {
-      where.price[Op.lte] = Number(query.maxPrice);
-    }
-  }
-
-  if (query.rating) {
-    where.rating = {
-      [Op.gte]: Number(query.rating),
-    };
-  }
-
-  if (query.inStock === "true") {
-    where.stock = {
-      [Op.gt]: 0,
-    };
-  }
-
-  return await productsRepository.findWithCategoriesOrSearch({
-    where,
-    parsedSort: features.parsedSort,
-    parsedAttributes: features.parsedAttributes,
-    parsedPagination: features.parsedPagination,
-    searchKeyword,
-    categoryId,
-  });
+  return await productsRepository.findWithCategoriesOrSearch(builtQuery);
 };
 
 exports.createProduct = async (sellerProfileId, data) => {
@@ -143,11 +150,15 @@ exports.createProduct = async (sellerProfileId, data) => {
 };
 
 exports.updateProduct = async (id, data) => {
-  const categories = await sanitizeAndValidateIds({
-    ids: data.categories,
-    findByIds: categoriesRepository.findByIds,
-    errorMessage: "One or more categories not found",
-  });
+  let categories = null;
+
+  if (data.categories) {
+    categories = await sanitizeAndValidateIds({
+      ids: data.categories,
+      findByIds: categoriesRepository.findByIds,
+      errorMessage: "One or more categories not found",
+    });
+  }
 
   const productData = { ...data };
   delete productData.categories;
@@ -159,6 +170,12 @@ exports.updateProduct = async (id, data) => {
   );
 };
 
-exports.deleteProduct = async (id, userId) => {
-  return await productsRepository.deleteProduct(id);
+exports.deleteProduct = async (id) => {
+  const deleted = await productsRepository.deleteProduct(id);
+
+  if (!deleted) {
+    throw new ApiError("Product not found", HttpStatus.NotFound);
+  }
+
+  return deleted;
 };

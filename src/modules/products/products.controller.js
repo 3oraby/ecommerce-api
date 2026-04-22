@@ -25,6 +25,17 @@ exports.getProductById = asyncHandler(async (req, res) => {
   });
 });
 
+exports.getSellerProducts = asyncHandler(async (req, res) => {
+  const products = await productsService.getSellerProducts(req.user, req.query);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    results: products.data.length,
+    data: products,
+  });
+});
+
 exports.getProductsByCategory = asyncHandler(async (req, res) => {
   const { categoryId } = req.params;
   const products = await productsService.getProductsByCategory(

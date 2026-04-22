@@ -24,6 +24,13 @@ router.use(authenticate);
 router.get("/search", productsController.searchProducts);
 
 router.get(
+  "/seller",
+  restrictTo(Roles.SELLER),
+  checkSellerProfileExists,
+  productsController.getSellerProducts,
+);
+
+router.get(
   "/",
   validate(categoryParamsSchema),
   productsController.getProductsByCategory,
