@@ -4,24 +4,8 @@ const ApiFeatures = require("../../utils/apiFeatures");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const { sanitizeAndValidateIds } = require("../../utils/array.util");
+const { Op } = require("sequelize");
 
-exports.getProducts = async (user, query) => {
-  const filterParams = { ...query };
-  // If user is Seller and NOT an Admin, enforce seeing ONLY his specific products
-  if (user && user.role === "SELLER" && user.sellerProfile) {
-    filterParams.seller_id = user.sellerProfile.id;
-  }
-
-  const features = new ApiFeatures({}, filterParams)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  return await productsRepository.findAll(features);
-};
-
-///
 exports.getProductById = async (id) => {
   const product = await productsRepository.findById(id);
 
@@ -55,8 +39,13 @@ exports.getProductsByCategory = async (categoryId, user, query) => {
     categoryId,
   });
 
-  if (!products.rows || products.count === 0) {
-    return [];
+  if (!products.data || products.total === 0) {
+    return {
+      total: 0,
+      page: 1,
+      limit: features.parsedPagination.limit,
+      data: [],
+    };
   }
 
   return products;
@@ -64,7 +53,19 @@ exports.getProductsByCategory = async (categoryId, user, query) => {
 
 exports.searchProducts = async (query, user) => {
   const filterParams = { ...query };
-  const searchKeyword = filterParams.keyword;
+
+  const searchKeyword = query.q || query.keyword;
+  const categoryId = query.category;
+
+  const excluded = [
+    "q",
+    "keyword",
+    "category",
+    "minPrice",
+    "maxPrice",
+    "inStock",
+  ];
+  excluded.forEach((el) => delete filterParams[el]);
 
   if (user && user.role === "SELLER" && user.sellerProfile) {
     filterParams.seller_id = user.sellerProfile.id;
@@ -76,9 +77,37 @@ exports.searchProducts = async (query, user) => {
     .limitFields()
     .paginate();
 
+  const where = { ...(features.parsedFilters || {}) };
+
+  if (query.minPrice || query.maxPrice) {
+    where.price = {};
+    if (query.minPrice) {
+      where.price[Op.gte] = Number(query.minPrice);
+    }
+    if (query.maxPrice) {
+      where.price[Op.lte] = Number(query.maxPrice);
+    }
+  }
+
+  if (query.rating) {
+    where.rating = {
+      [Op.gte]: Number(query.rating),
+    };
+  }
+
+  if (query.inStock === "true") {
+    where.stock = {
+      [Op.gt]: 0,
+    };
+  }
+
   return await productsRepository.findWithCategoriesOrSearch({
-    ...features,
+    where,
+    parsedSort: features.parsedSort,
+    parsedAttributes: features.parsedAttributes,
+    parsedPagination: features.parsedPagination,
     searchKeyword,
+    categoryId,
   });
 };
 

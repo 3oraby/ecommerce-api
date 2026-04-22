@@ -6,28 +6,55 @@ class ApiFeatures {
 
   filter() {
     const queryObj = { ...this.queryString };
-    const excludedFields = ["page", "sort", "limit", "fields", "keyword"];
+
+    const excludedFields = [
+      "page",
+      "sort",
+      "limit",
+      "fields",
+      "keyword",
+      "q",
+      "category",
+      "minPrice",
+      "maxPrice",
+      "inStock",
+    ];
+
     excludedFields.forEach((el) => delete queryObj[el]);
 
     let queryStr = JSON.stringify(queryObj);
+
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
     this.parsedFilters = JSON.parse(queryStr);
-    
+
     return this;
   }
 
   sort() {
     if (this.queryString.sort) {
-      this.parsedSort = this.queryString.sort.split(",").map((field) => {
+      let sortFields = this.queryString.sort;
+
+      if (Array.isArray(sortFields)) {
+        sortFields = sortFields.join(",");
+      }
+
+      this.parsedSort = sortFields.split(",").map((field) => {
+        if (field.includes(":")) {
+          const [key, order] = field.split(":");
+          return [key, order.toUpperCase() === "DESC" ? "DESC" : "ASC"];
+        }
+
         if (field.startsWith("-")) {
           return [field.substring(1), "DESC"];
         }
+
         return [field, "ASC"];
       });
     } else {
-      this.parsedSort = [["created_at", "DESC"]]; // Default
+      this.parsedSort = [["created_at", "DESC"]];
     }
+
     return this;
   }
 
@@ -35,7 +62,7 @@ class ApiFeatures {
     if (this.queryString.fields) {
       this.parsedAttributes = this.queryString.fields.split(",");
     } else {
-      this.parsedAttributes = null; // null means all attributes
+      this.parsedAttributes = null;
     }
     return this;
   }

@@ -30,6 +30,32 @@ const handleTableNotFound = (err) => {
   return new ApiError(message, HttpStatus.NotFound);
 };
 
+const handleDatabaseError = (err) => {
+  const message = err.original?.sqlMessage || "";
+
+  if (message.includes("Unknown column")) {
+    const match = message.match(/Unknown column '(.+?)'/);
+    const field = match ? match[1].split(".").pop() : "unknown";
+
+    return new ApiError(
+      `Invalid field: '${field}' is not allowed`,
+      HttpStatus.BadRequest,
+    );
+  }
+
+  if (message.includes("foreign key constraint fails")) {
+    return new ApiError(
+      "Invalid reference: related resource not found",
+      HttpStatus.BadRequest,
+    );
+  }
+
+  return new ApiError(
+    "Database error occurred",
+    HttpStatus.InternalServerError,
+  );
+};
+
 const globalErrorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || HttpStatus.InternalServerError;
   err.status = err.status || "Error";
@@ -41,6 +67,9 @@ const globalErrorHandler = (err, req, res, next) => {
 
     if (error.parent && error.parent.errno === 1146)
       error = handleTableNotFound(error);
+
+    if (error.name === "SequelizeDatabaseError")
+      error = handleDatabaseError(error);
 
     sendErrorProd(error, res);
   } else {

@@ -13,7 +13,12 @@ exports.findById = async (id) => {
   });
 };
 
-exports.findAll = async ({ parsedPagination, parsedSort, parsedAttributes, parsedFilters }) => {
+exports.findAll = async ({
+  parsedPagination,
+  parsedSort,
+  parsedAttributes,
+  parsedFilters,
+}) => {
   const options = {
     where: parsedFilters || {},
     order: parsedSort || [["created_at", "DESC"]],
@@ -25,69 +30,72 @@ exports.findAll = async ({ parsedPagination, parsedSort, parsedAttributes, parse
   }
 
   options.include = [
-    { model: Category, as: "categories", attributes: ["id", "name"] }
+    { model: Category, as: "categories", attributes: ["id", "name"] },
   ];
 
   return await Product.findAndCountAll(options);
 };
 
-exports.findWithCategoriesOrSearch = async ({ parsedPagination, parsedSort, parsedAttributes, parsedFilters, searchKeyword, categoryId }) => {
-  const options = {
-    where: parsedFilters || {},
-    order: parsedSort || [["created_at", "DESC"]],
-    ...parsedPagination,
-    include: [
-      { 
-        model: Category, 
-        as: "categories", 
-        attributes: ["id", "name"],
-        through: { attributes: [] } 
-      },
-      { model: ProductImage, as: "images" }
-    ],
-    distinct: true
-  };
-
-  if (parsedAttributes) {
-    options.attributes = parsedAttributes;
-  }
-
+exports.findWithCategoriesOrSearch = async ({
+  where = {},
+  parsedSort,
+  parsedAttributes,
+  parsedPagination,
+  searchKeyword,
+  categoryId,
+}) => {
   if (searchKeyword) {
-    options.where[Op.or] = [
+    where[Op.or] = [
       { name: { [Op.like]: `%${searchKeyword}%` } },
-      { description: { [Op.like]: `%${searchKeyword}%` } }
+      { description: { [Op.like]: `%${searchKeyword}%` } },
     ];
   }
 
-  if (categoryId) {
-    options.include[0].where = { id: categoryId };
+  const options = {
+    where,
+    order: parsedSort || [["created_at", "DESC"]],
+
+    limit: parsedPagination?.limit || 10,
+    offset: parsedPagination?.offset || 0,
+
+    subQuery: false,
+
+    include: [
+      {
+        model: Category,
+        as: "categories",
+        attributes: ["id", "name"],
+        through: { attributes: [] },
+        required: false,
+      },
+      {
+        model: ProductImage,
+        as: "images",
+        required: false,
+      },
+    ],
+
+    distinct: true,
+    col: "id",
+  };
+
+  if (parsedAttributes?.length) {
+    options.attributes = parsedAttributes;
   }
 
-  return await Product.findAndCountAll(options);
-};
+  if (categoryId) {
+    options.include[0].where = { id: Number(categoryId) };
+    options.include[0].required = true;
+  }
 
-exports.createProductWithCategoriesAndImages = async (productData, categoryIds, productImages) => {
-  return await sequelize.transaction(async (t) => {
-    const product = await Product.create(productData, { transaction: t });
+  const result = await Product.findAndCountAll(options);
 
-    if (categoryIds && categoryIds.length > 0) {
-      const records = categoryIds.map((id) => ({
-        product_id: product.id,
-        category_id: id,
-      }));
-      await ProductCategory.bulkCreate(records, { transaction: t });
-    }
-
-    if (productImages && productImages.length > 0) {
-      const imageRecords = productImages.map((img) => ({
-        ...img,
-        product_id: product.id,
-      }));
-      await ProductImage.bulkCreate(imageRecords, { transaction: t });
-    }
-
-    return product;
-  });
+  return {
+    total: result.count,
+    page: Math.floor(parsedPagination.offset / parsedPagination.limit) + 1,
+    limit: parsedPagination.limit,
+    data: result.rows,
+  };
 };
 
 exports.updateProductWithCategories = async (id, productData, categoryIds) => {
@@ -98,7 +106,10 @@ exports.updateProductWithCategories = async (id, productData, categoryIds) => {
     await product.update(productData, { transaction: t });
 
     if (categoryIds) {
-      await ProductCategory.destroy({ where: { product_id: id }, transaction: t });
+      await ProductCategory.destroy({
+        where: { product_id: id },
+        transaction: t,
+      });
       if (categoryIds.length > 0) {
         const records = categoryIds.map((catId) => ({
           product_id: id,
