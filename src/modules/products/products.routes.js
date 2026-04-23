@@ -16,8 +16,11 @@ const {
   paramsSchema,
   categoryParamsSchema,
 } = require("./products.validation");
+const reviewsRouter = require("../reviews/reviews.routes");
 
 const router = express.Router({ mergeParams: true });
+
+router.use("/:productId/reviews", reviewsRouter);
 
 router.use(authenticate);
 

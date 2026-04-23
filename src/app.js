@@ -24,6 +24,7 @@ const productRouter = require("./modules/products/products.routes");
 const favoriteRouter = require("./modules/favorites/favorites.routes");
 const cartRouter = require("./modules/cart/cart.routes");
 const ordersRouter = require("./modules/orders/orders.routes");
+const reviewsRouter = require("./modules/reviews/reviews.routes");
 
 // Enable trust proxy for rate limiting & secure cookies
 // app.set("trust proxy", true);
@@ -87,6 +88,7 @@ app.use("/api/v1/products", productRouter);
 app.use("/api/v1/favorites", favoriteRouter);
 app.use("/api/v1/carts", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
+app.use("/api/v1/reviews", reviewsRouter);
 
 // ERROR HANDLING
 
