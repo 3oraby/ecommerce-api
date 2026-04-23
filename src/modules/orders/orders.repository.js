@@ -3,7 +3,6 @@ const OrderItem = require("./orderItem.model");
 const Payment = require("./payment.model");
 const Shipping = require("./shipping.model");
 const { Product, ProductImage } = require("../products/products.model");
-const Category = require("../categories/categories.model");
 const { Cart } = require("../cart/cart.model");
 const sequelize = require("../../config/sequelize");
 const SellerProfile = require("../sellers/sellers.model");
@@ -181,6 +180,15 @@ exports.updateOrderStatus = async (id, status) => {
   if (status === "CANCELED") updateShippingPayload.canceled_at = new Date();
 
   await Shipping.update(updateShippingPayload, { where: { order_id: id } });
+
+  // update payment status
+  if (status === "DELIVERED") {
+    await Payment.update({ status: "COMPLETED" }, { where: { order_id: id } });
+  }
+
+  if (status === "CANCELED") {
+    await Payment.update({ status: "FAILED" }, { where: { order_id: id } });
+  }
 };
 
 exports.cancelOrder = async (id) => {

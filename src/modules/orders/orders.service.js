@@ -3,8 +3,18 @@ const cartRepository = require("../cart/cart.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const OrderStatus = require("../../enums/orderStatus.enum");
+const addressesRepository = require("../addresses/addresses.repository");
 
 exports.checkout = async (userId, addressId, paymentMethod) => {
+  const address = await addressesRepository.findByIdAndUser(addressId, userId);
+
+  if (!address) {
+    throw new ApiError(
+      "Address not found or does not belong to user",
+      HttpStatus.FORBIDDEN,
+    );
+  }
+
   const cart = await cartRepository.getCartWithItems(userId);
 
   if (!cart || !cart.items || cart.items.length === 0) {

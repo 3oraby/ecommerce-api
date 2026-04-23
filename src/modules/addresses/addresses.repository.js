@@ -4,7 +4,10 @@ const sequelize = require("../../config/sequelize");
 exports.createAddress = async (data, resetOthers = false) => {
   if (resetOthers && data.user_id) {
     return await sequelize.transaction(async (t) => {
-      await Address.update({ is_default: false }, { where: { user_id: data.user_id }, transaction: t });
+      await Address.update(
+        { is_default: false },
+        { where: { user_id: data.user_id }, transaction: t },
+      );
       return await Address.create(data, { transaction: t });
     });
   }
@@ -13,6 +16,15 @@ exports.createAddress = async (data, resetOthers = false) => {
 
 exports.getAddressById = async (id) => {
   return await Address.findByPk(id);
+};
+
+exports.findByIdAndUser = async (addressId, userId) => {
+  return await Address.findOne({
+    where: {
+      id: addressId,
+      user_id: userId,
+    },
+  });
 };
 
 exports.getUserAddresses = async (user_id) => {
@@ -40,7 +52,10 @@ exports.findExactAddress = async (user_id, data) => {
 exports.updateAddress = async (id, data, user_id = null) => {
   if (data.is_default && user_id) {
     return await sequelize.transaction(async (t) => {
-      await Address.update({ is_default: false }, { where: { user_id }, transaction: t });
+      await Address.update(
+        { is_default: false },
+        { where: { user_id }, transaction: t },
+      );
       const address = await Address.findByPk(id, { transaction: t });
       if (!address) return null;
       return await address.update(data, { transaction: t });
@@ -54,9 +69,12 @@ exports.updateAddress = async (id, data, user_id = null) => {
 exports.deleteAddress = async (id, nextDefaultId = null) => {
   if (nextDefaultId) {
     return await sequelize.transaction(async (t) => {
-      const nextAddress = await Address.findByPk(nextDefaultId, { transaction: t });
-      if (nextAddress) await nextAddress.update({ is_default: true }, { transaction: t });
-      
+      const nextAddress = await Address.findByPk(nextDefaultId, {
+        transaction: t,
+      });
+      if (nextAddress)
+        await nextAddress.update({ is_default: true }, { transaction: t });
+
       const address = await Address.findByPk(id, { transaction: t });
       if (address) await address.destroy({ transaction: t });
       return true;
@@ -74,7 +92,10 @@ exports.resetDefaultAddresses = async (user_id) => {
 
 exports.setDefaultAddress = async (id, user_id) => {
   return await sequelize.transaction(async (t) => {
-    await Address.update({ is_default: false }, { where: { user_id }, transaction: t });
+    await Address.update(
+      { is_default: false },
+      { where: { user_id }, transaction: t },
+    );
     const address = await Address.findByPk(id, { transaction: t });
     if (!address) return null;
     return await address.update({ is_default: true }, { transaction: t });
