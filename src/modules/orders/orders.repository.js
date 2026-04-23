@@ -148,11 +148,28 @@ exports.findSellerOrders = async (userId, filters) => {
 
   const result = await Order.findAndCountAll(query);
 
+  const data = result.rows.map((order) => {
+    let sellerTotal = 0;
+
+    order.items.forEach((item) => {
+      sellerTotal += item.price * item.quantity;
+    });
+
+    delete order.dataValues.total;
+    delete order.dataValues.payment;
+    delete order.dataValues.shipping;
+
+    return {
+      seller_total: sellerTotal,
+      ...order.toJSON(),
+    };
+  });
+
   return {
     total: result.count,
     page: Math.floor(offset / limit) + 1,
     limit,
-    data: result.rows,
+    data,
   };
 };
 
