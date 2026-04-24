@@ -4,6 +4,8 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const OrderStatus = require("../../enums/orderStatus.enum");
 const addressesRepository = require("../addresses/addresses.repository");
+const shippingStatus = require("../../enums/shippingStatus.enum");
+const PaymentStatus = require("../../enums/paymentStatus.enum");
 
 exports.checkout = async (userId, addressId, paymentMethod) => {
   const address = await addressesRepository.findByIdAndUser(addressId, userId);
@@ -32,6 +34,13 @@ exports.checkout = async (userId, addressId, paymentMethod) => {
       );
     }
 
+    if (item.quantity > item.product.stock) {
+      throw new ApiError(
+        `Not enough stock for product ${item.product.name}`,
+        HttpStatus.BadRequest,
+      );
+    }
+
     const price = item.product.price;
     total += parseFloat(price) * item.quantity;
 
@@ -51,10 +60,10 @@ exports.checkout = async (userId, addressId, paymentMethod) => {
     payment: {
       amount: total,
       method: paymentMethod,
-      status: "PENDING",
+      status: PaymentStatus.PENDING,
     },
     shipping: {
-      status: "PENDING",
+      status: shippingStatus.PENDING,
     },
   };
 
@@ -125,7 +134,6 @@ exports.updateOrderStatusAdmin = async (orderId, newStatus) => {
   }
 
   await ordersRepository.updateOrderStatus(orderId, newStatus);
-  return { success: true };
 };
 
 exports.getSellerOrders = async (sellerId, filters) => {

@@ -24,32 +24,36 @@ exports.getCart = async (userId) => {
     })),
   };
 };
-
 exports.addToCart = async (userId, productId, quantity = 1) => {
   const product = await productsRepository.findById(productId);
+
   if (!product) {
     throw new ApiError("Product not found", HttpStatus.NotFound);
   }
 
-  // 1. get or create cart
+  if (product.stock < quantity) {
+    throw new ApiError("Not enough stock available", HttpStatus.BadRequest);
+  }
+
   let cart = await cartRepository.findActiveCartByUser(userId);
+
   if (!cart) {
     cart = await cartRepository.createCart(userId);
   }
 
-  // 2. check if item exists
   const existingItem = await cartRepository.findCartItem(cart.id, productId);
 
-  // 3. decide (add or update)
-  // 4. call repository
   if (existingItem) {
     const newQuantity = existingItem.quantity + quantity;
+
+    if (product.stock < newQuantity) {
+      throw new ApiError("Not enough stock available", HttpStatus.BadRequest);
+    }
+
     await cartRepository.updateCartItem(cart.id, productId, newQuantity);
   } else {
     await cartRepository.addCartItem(cart.id, productId, quantity);
   }
-
-  return { success: true };
 };
 
 exports.updateCartItem = async (userId, productId, quantity) => {
@@ -68,8 +72,6 @@ exports.updateCartItem = async (userId, productId, quantity) => {
   } else {
     await cartRepository.updateCartItem(cart.id, productId, quantity);
   }
-
-  return { success: true };
 };
 
 exports.deleteFromCart = async (userId, productId) => {
@@ -84,6 +86,4 @@ exports.deleteFromCart = async (userId, productId) => {
   }
 
   await cartRepository.deleteCartItem(cart.id, productId);
-
-  return { success: true };
 };

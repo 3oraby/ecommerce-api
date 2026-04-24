@@ -6,6 +6,7 @@ const { Product, ProductImage } = require("../products/products.model");
 const { Cart } = require("../cart/cart.model");
 const sequelize = require("../../config/sequelize");
 const SellerProfile = require("../sellers/sellers.model");
+const OrderStatus = require("../../enums/orderStatus.enum");
 
 // Setup Associations
 Order.hasMany(OrderItem, { foreignKey: "order_id", as: "items" });
@@ -21,7 +22,7 @@ OrderItem.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 
 exports.processCheckout = async (cartId, orderData) => {
   return await sequelize.transaction(async (t) => {
-    // 1. Create order and related records
+    // Create order and related records
     const order = await Order.create(orderData, {
       transaction: t,
       include: [
@@ -31,7 +32,7 @@ exports.processCheckout = async (cartId, orderData) => {
       ],
     });
 
-    // 2. Mark cart as ordered
+    // Mark cart as ordered
     await Cart.update(
       { status: "ORDERED" },
       { where: { id: cartId }, transaction: t },
@@ -172,23 +173,83 @@ exports.findSellerOrders = async (userId, filters) => {
   };
 };
 
-exports.updateOrderStatus = async (id, status) => {
-  await Order.update({ status }, { where: { id } });
+exports.updateOrderStatus = async (orderId, status) => {
+  return await sequelize.transaction(async (t) => {
+    const freshOrder = await Order.findByPk(orderId, {
+      include: [
+        {
+          model: OrderItem,
+          as: "items",
+        },
+      ],
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
 
-  const updateShippingPayload = { status };
-  if (status === "DELIVERED") updateShippingPayload.delivered_at = new Date();
-  if (status === "CANCELED") updateShippingPayload.canceled_at = new Date();
+    if (!freshOrder) {
+      throw new Error("Order not found");
+    }
 
-  await Shipping.update(updateShippingPayload, { where: { order_id: id } });
+    const wasDeliveredBefore = freshOrder.status === OrderStatus.DELIVERED;
 
-  // update payment status
-  if (status === "DELIVERED") {
-    await Payment.update({ status: "COMPLETED" }, { where: { order_id: id } });
-  }
+    await freshOrder.update({ status }, { transaction: t });
 
-  if (status === "CANCELED") {
-    await Payment.update({ status: "FAILED" }, { where: { order_id: id } });
-  }
+    const shippingPayload = { status };
+
+    if (status === OrderStatus.DELIVERED) {
+      shippingPayload.delivered_at = new Date();
+    }
+
+    if (status === OrderStatus.CANCELED) {
+      shippingPayload.canceled_at = new Date();
+    }
+
+    await Shipping.update(shippingPayload, {
+      where: { order_id: freshOrder.id },
+      transaction: t,
+    });
+
+    if (status === OrderStatus.DELIVERED) {
+      await Payment.update(
+        { status: "COMPLETED" },
+        { where: { order_id: freshOrder.id }, transaction: t },
+      );
+    }
+
+    if (status === OrderStatus.CANCELED) {
+      await Payment.update(
+        { status: "FAILED" },
+        { where: { order_id: freshOrder.id }, transaction: t },
+      );
+    }
+
+    if (status === OrderStatus.DELIVERED && !wasDeliveredBefore) {
+      const productIds = freshOrder.items.map((i) => i.product_id);
+
+      const products = await Product.findAll({
+        where: { id: productIds },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      for (const item of freshOrder.items) {
+        const product = productMap.get(item.product_id);
+
+        if (!product) {
+          throw new Error(`Product not found: ${item.product_id}`);
+        }
+
+        await product.decrement("stock", {
+          by: item.quantity,
+          transaction: t,
+        });
+      }
+    }
+
+    return true;
+  });
 };
 
 exports.cancelOrder = async (id) => {
