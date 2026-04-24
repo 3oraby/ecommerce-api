@@ -179,3 +179,27 @@ exports.deleteProduct = async (id) => {
 
   return deleted;
 };
+
+exports.getHomeData = async () => {
+  const [
+    featuredProducts,
+    newArrivals,
+    topRated,
+    bestSellers,
+    categories,
+  ] = await Promise.all([
+    productsRepository.getFeaturedProducts(),
+    productsRepository.getNewArrivals(),
+    productsRepository.getTopRatedProducts(),
+    productsRepository.getBestSellers(),
+    productsRepository.getHomeCategories(),
+  ]);
+
+  return {
+    featured_products: featuredProducts,
+    new_arrivals: newArrivals,
+    top_rated: topRated,
+    best_sellers: bestSellers,
+    categories,
+  };
+};

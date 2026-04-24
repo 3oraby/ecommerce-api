@@ -161,3 +161,55 @@ exports.deleteProduct = async (id) => {
   await product.destroy();
   return true;
 };
+
+exports.getFeaturedProducts = async () => {
+  return await Product.findAll({
+    order: [["rating", "DESC"]],
+    limit: 10,
+    attributes: ["id", "name", "price", "main_image", "rating"],
+  });
+};
+
+exports.getNewArrivals = async () => {
+  return await Product.findAll({
+    order: [["created_at", "DESC"]],
+    limit: 10,
+    attributes: ["id", "name", "price", "main_image", "created_at"],
+  });
+};
+
+exports.getTopRatedProducts = async () => {
+  return await Product.findAll({
+    where: {
+      rating: { [Op.gte]: 4 },
+    },
+    order: [["rating", "DESC"]],
+    limit: 10,
+    attributes: ["id", "name", "price", "main_image", "rating"],
+  });
+};
+
+exports.getBestSellers = async () => {
+  const results = await sequelize.query(
+    `
+    SELECT p.id, p.name, p.price, p.main_image, SUM(oi.quantity) as sold_count
+    FROM order_items oi
+    JOIN orders o ON o.id = oi.order_id
+    JOIN products p ON p.id = oi.product_id
+    WHERE o.status = 'DELIVERED'
+    GROUP BY p.id
+    ORDER BY sold_count DESC
+    LIMIT 10
+    `,
+    { type: sequelize.QueryTypes.SELECT }
+  );
+
+  return results;
+};
+
+exports.getHomeCategories = async () => {
+  return await Category.findAll({
+    attributes: ["id", "name"],
+    limit: 10,
+  });
+};

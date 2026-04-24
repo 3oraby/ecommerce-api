@@ -41,6 +41,8 @@ router.get(
 
 router.get("/all", productsController.getProducts);
 
+router.get("/home", restrictTo(Roles.CUSTOMER,Roles.ADMIN), productsController.getHomeData);
+
 router.get("/:id", validate(paramsSchema), productsController.getProductById);
 
 router.post(

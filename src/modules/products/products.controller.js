@@ -96,3 +96,12 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
     message: "Product deleted successfully",
   });
 });
+
+exports.getHomeData = asyncHandler(async (req, res, next) => {
+  const data = await productsService.getHomeData();
+
+  sendResponse({
+    res,
+    data,
+  });
+});
