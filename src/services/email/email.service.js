@@ -1,29 +1,42 @@
-const { sendEmail } = require('./sendEmail');
-const { renderTemplate } = require('./email.templates');
+const { sendEmail } = require("./email.provider");
 
-exports.sendOtpEmail = async (user, otp) => {
-  const html = renderTemplate('otp_email', { name: user.name, otp });
+exports.sendEmailVerification = async (user, otp) => {
+  const expiresInMinutes = parseInt(process.env.OTP_EXPIRES_IN || "10", 10);
+  const expirationDate = new Date(Date.now() + expiresInMinutes * 60000);
+  const expiresAt = expirationDate.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return await sendEmail({
     to: user.email,
-    subject: 'Your OTP Code',
-    html,
+    subject: "Verify Your Email Address",
+    templateName: "email-verification",
+    data: { name: user.name, otp, expiresAt },
   });
 };
 
-exports.sendVerifyEmail = async (user, verifyUrl) => {
-  const html = renderTemplate('verify_email', { name: user.name, verifyUrl });
+exports.sendPasswordReset = async (user, otp) => {
+  const expiresInMinutes = parseInt(process.env.OTP_EXPIRES_IN || "10", 10);
+  const expirationDate = new Date(Date.now() + expiresInMinutes * 60000);
+  const expiresAt = expirationDate.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return await sendEmail({
     to: user.email,
-    subject: 'Verify Your Email Address',
-    html,
+    subject: "Reset Your Password",
+    templateName: "password-reset",
+    data: { name: user.name, otp, expiresAt },
   });
 };
 
-exports.sendForgotPasswordEmail = async (user, resetUrl) => {
-  const html = renderTemplate('forget_password', { name: user.name, resetUrl });
+exports.sendSecurityAlert = async (user, message) => {
   return await sendEmail({
     to: user.email,
-    subject: 'Reset Your Password',
-    html,
+    subject: "Security Alert: Recent Account Activity",
+    templateName: "security-alert",
+    data: { name: user.name, message },
   });
 };
