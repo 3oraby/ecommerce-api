@@ -27,6 +27,8 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "mysql2": "^3.20.0",
+    "nodemailer": "^8.0.6",
+    "pug": "^3.0.4",
     "sequelize": "^6.37.8",
     "zod": "^4.3.6",
     "zod-validation-error": "^5.0.0"

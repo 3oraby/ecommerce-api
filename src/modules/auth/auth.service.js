@@ -14,6 +14,12 @@ const AccountStatus = require("../../enums/accountStatus.enum");
 
 const { generateOTP, hashOTP, verifyOTP } = require("../../utils/otp.util");
 
+const {
+  sendOtpEmail,
+  sendVerifyEmail,
+  sendForgotPasswordEmail,
+} = require("../../services/email/email.service");
+
 const checkUserExists = async (email, errMsg = "Invalid credentials") => {
   const user = await authRepository.getUserByEmail(email);
   if (!user) {
@@ -53,8 +59,7 @@ const sendVerificationEmail = async (user) => {
 
   await authRepository.saveEmailOTP(user.id, hashedOTP);
 
-  // TODO: send email
-  console.log(`Email verification OTP for ${user.email}: ${otp}`);
+  await sendVerifyEmail(user, otp);
 };
 
 const sendPasswordResetEmail = async (user) => {
@@ -74,8 +79,7 @@ const sendPasswordResetEmail = async (user) => {
 
   await authRepository.saveResetPasswordOTP(user.id, hashedOTP);
 
-  // TODO: send email
-  console.log(`Password reset OTP for ${user.email}: ${otp}`);
+  await sendForgotPasswordEmail(user, otp);
 };
 
 const validateRefreshToken = async (refreshToken) => {

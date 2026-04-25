@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    style.
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; text-align: center; }
+      .btn { display: inline-block; padding: 10px 20px; margin: 20px 0; background-color: #28a745; color: #fff; text-decoration: none; border-radius: 5px; }
+      .footer { margin-top: 20px; font-size: 12px; color: #777; }
+  body
+    div.container
+      h2 Welcome #{name}!
+      p Thank you for registering. Please click the button below to verify your email address:
+      a.btn(href=verifyUrl) Verify Email
+      p If the button doesn't work, copy and paste this link into your browser:
+      p #{verifyUrl}
+      div.footer
+        p If you did not create an account, please ignore this email.

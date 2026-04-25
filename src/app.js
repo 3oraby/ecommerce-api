@@ -76,7 +76,7 @@ app.use(
 app.use(compression());
 
 // Static files (optional)
-// app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
