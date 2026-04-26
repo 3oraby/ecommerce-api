@@ -17,6 +17,7 @@ const {
   categoryParamsSchema,
 } = require("./products.validation");
 const reviewsRouter = require("../reviews/reviews.routes");
+const { uploadMultipleImages } = require("../../middlewares/upload.middleware");
 
 const router = express.Router({ mergeParams: true });
 
@@ -41,7 +42,11 @@ router.get(
 
 router.get("/all", productsController.getProducts);
 
-router.get("/home", restrictTo(Roles.CUSTOMER,Roles.ADMIN), productsController.getHomeData);
+router.get(
+  "/home",
+  restrictTo(Roles.CUSTOMER, Roles.ADMIN),
+  productsController.getHomeData,
+);
 
 router.get("/:id", validate(paramsSchema), productsController.getProductById);
 
@@ -49,6 +54,7 @@ router.post(
   "/",
   restrictTo(Roles.SELLER),
   checkSellerProfileExists,
+  uploadMultipleImages(),
   validate(createProductSchema),
   productsController.createProduct,
 );

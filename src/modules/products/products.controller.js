@@ -1,8 +1,9 @@
 const productsService = require("./products.service");
 const HttpStatus = require("../../enums/httpStatus.enum");
-const ApiError = require("../../utils/apiError");
 const asyncHandler = require("../../utils/asyncHandler");
 const sendResponse = require("../../utils/sendResponse");
+const uploadService = require("../../services/storage/upload.service");
+const uploadFolders = require("../../enums/uploadFolders.enum");
 
 exports.getProducts = asyncHandler(async (req, res) => {
   const products = await productsService.searchProducts(req.query, req.user);
@@ -63,9 +64,21 @@ exports.searchProducts = asyncHandler(async (req, res) => {
 });
 
 exports.createProduct = asyncHandler(async (req, res) => {
+  let productData = { ...req.body };
+
+  if (req.files) {
+    const imageUrls = await uploadService.uploadMultipleImages(
+      req.files,
+      uploadFolders.PRODUCTS,
+    );
+    productData.images = imageUrls;
+  }
+
+  console.log(productData);
+
   const product = await productsService.createProduct(
     req.sellerProfile.id,
-    req.body,
+    productData,
   );
 
   sendResponse({

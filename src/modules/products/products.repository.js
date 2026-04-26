@@ -2,13 +2,21 @@ const { Op } = require("sequelize");
 const sequelize = require("../../config/sequelize");
 const { Product, ProductCategory, ProductImage } = require("./products.model");
 const Category = require("../categories/categories.model");
-const SellerProfile = require("../sellers/sellers.model");
 
 exports.findById = async (id) => {
   return await Product.findByPk(id, {
     include: [
-      { model: Category, as: "categories", attributes: ["id", "name"] },
-      { model: ProductImage, as: "images" },
+      {
+        model: Category,
+        as: "categories",
+        attributes: ["id", "name"],
+        through: { attributes: [] },
+      },
+      {
+        model: ProductImage,
+        as: "images",
+        attributes: ["id", "image_url"],
+      },
     ],
   });
 };
@@ -35,37 +43,56 @@ exports.findAll = async ({
 
   return await Product.findAndCountAll(options);
 };
-
 exports.createProductWithCategoriesAndImages = async (
   productData,
   categoryIds,
   productImages,
 ) => {
-  return await sequelize.transaction(async (t) => {
-    const product = await Product.create(productData, {
+  const product = await sequelize.transaction(async (t) => {
+    const createdProduct = await Product.create(productData, {
       transaction: t,
     });
 
     if (categoryIds?.length) {
-      const records = categoryIds.map((catId) => ({
-        product_id: product.id,
-        category_id: catId,
-      }));
-
-      await ProductCategory.bulkCreate(records, { transaction: t });
+      await ProductCategory.bulkCreate(
+        categoryIds.map((catId) => ({
+          product_id: createdProduct.id,
+          category_id: catId,
+        })),
+        { transaction: t },
+      );
     }
 
     if (productImages?.length) {
-      const images = productImages.map((img) => ({
-        ...img,
-        product_id: product.id,
-      }));
-
-      await ProductImage.bulkCreate(images, { transaction: t });
+      await ProductImage.bulkCreate(
+        productImages.map((img) => ({
+          ...img,
+          product_id: createdProduct.id,
+        })),
+        { transaction: t },
+      );
     }
 
-    return product;
+    return createdProduct;
   });
+
+  const fullProduct = await Product.findByPk(product.id, {
+    include: [
+      {
+        model: ProductImage,
+        as: "images",
+        attributes: ["id", "image_url"],
+      },
+      {
+        model: Category,
+        as: "categories",
+        attributes: ["id", "name"],
+        through: { attributes: [] },
+      },
+    ],
+  });
+
+  return fullProduct;
 };
 
 exports.findWithCategoriesOrSearch = async ({
@@ -201,7 +228,7 @@ exports.getBestSellers = async () => {
     ORDER BY sold_count DESC
     LIMIT 10
     `,
-    { type: sequelize.QueryTypes.SELECT }
+    { type: sequelize.QueryTypes.SELECT },
   );
 
   return results;

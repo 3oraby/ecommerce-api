@@ -29,5 +29,5 @@ const upload = multer({
 // Reusable middlewares
 exports.uploadSingleImage = (fieldName = FileFields.IMAGE) =>
   upload.single(fieldName);
-exports.uploadMultipleImages = (fieldName = FileFields.IMAGE, maxCount = 5) =>
+exports.uploadMultipleImages = (fieldName = FileFields.IMAGES, maxCount = 5) =>
   upload.array(fieldName, maxCount);

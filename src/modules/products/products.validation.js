@@ -5,10 +5,35 @@ exports.createProductSchema = z.object({
     .object({
       name: z.string().min(2, "Name must be at least 2 characters"),
       description: z.string().optional(),
-      price: z.number().positive("Price must be a positive number"),
-      stock: z.number().int().nonnegative("Stock must be a non-negative integer"),
-      categories: z.array(z.number().int()).min(1, "At least one category is required"),
-      images: z.array(z.string().url("Each image must be a valid URL")).min(1, "At least one image is required"),
+      price: z.preprocess(
+        (val) => Number(val),
+        z
+          .number({
+            message: "Price is required",
+          })
+          .positive("Price must be a positive number"),
+      ),
+      stock: z.preprocess(
+        (val) => Number(val),
+        z
+          .number({
+            message: "Stock is required",
+          })
+          .int()
+          .nonnegative("Stock must be a non-negative integer"),
+      ),
+      categories: z.preprocess(
+        (val) => {
+          if (!val) return val;
+          const arr = Array.isArray(val) ? val : [val];
+          return arr.map(Number);
+        },
+        z
+          .array(z.number().int(), {
+            message: "Category ID is required",
+          })
+          .min(1, "At least one category is required"),
+      ),
     })
     .strict(),
 });
@@ -40,6 +65,8 @@ exports.paramsSchema = z.object({
 
 exports.categoryParamsSchema = z.object({
   params: z.object({
-    categoryId: z.string().regex(/^\d+$/, "Category ID must be a numeric string"),
+    categoryId: z
+      .string()
+      .regex(/^\d+$/, "Category ID must be a numeric string"),
   }),
 });

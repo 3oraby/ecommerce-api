@@ -36,7 +36,7 @@ const Product = sequelize.define(
     },
     rating: {
       type: DataTypes.DECIMAL(2, 1),
-      defaultValue: 0,
+      defaultValue: 0.0,
     },
   },
   {

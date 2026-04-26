@@ -1,5 +1,6 @@
 const HttpStatus = require("../enums/httpStatus.enum");
 const ApiError = require("../utils/apiError");
+const multer = require("multer");
 
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -23,6 +24,20 @@ const sendErrorProd = (err, res) => {
       message: "Something went very wrong!",
     });
   }
+};
+
+const handleMulterError = (err) => {
+  let message = "File upload error";
+
+  if (err.code === "LIMIT_FILE_SIZE") {
+    message = "File size is too large";
+  }
+
+  if (err.code === "LIMIT_UNEXPECTED_FILE") {
+    message = `Invalid file field '${err.field}'`;
+  }
+
+  return new ApiError(message, HttpStatus.BadRequest);
 };
 
 const handleTableNotFound = (err) => {
@@ -61,9 +76,15 @@ const globalErrorHandler = (err, req, res, next) => {
   err.status = err.status || "Error";
 
   if (process.env.NODE_ENV === "development") {
-    sendErrorDev(err, res);
-  } else if (process.env.NODE_ENV === "production") {
+    return sendErrorDev(err, res);
+  }
+
+  if (process.env.NODE_ENV === "production") {
     let error = Object.create(err);
+
+    if (error instanceof multer.MulterError) {
+      error = handleMulterError(error);
+    }
 
     if (error.parent && error.parent.errno === 1146)
       error = handleTableNotFound(error);
@@ -71,12 +92,10 @@ const globalErrorHandler = (err, req, res, next) => {
     if (error.name === "SequelizeDatabaseError")
       error = handleDatabaseError(error);
 
-    sendErrorProd(error, res);
-  } else {
-    console.log(
-      "Error handling middleware called outside dev/prod environment",
-    );
+    return sendErrorProd(error, res);
   }
+
+  console.log("Error handling middleware called outside dev/prod environment");
 };
 
 module.exports = globalErrorHandler;
