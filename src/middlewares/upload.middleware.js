@@ -1,30 +1,33 @@
 const multer = require("multer");
-const path = require("path");
-const ApiError = require("../utils/apiError");
+const AppError = require("../utils/apiError");
 const HttpStatus = require("../enums/httpStatus.enum");
+const FileFields = require("../enums/fileFields.enum");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, "product-" + uniqueSuffix + path.extname(file.originalname));
-  },
-});
+// Use memory storage to hold file data in a Buffer
+const storage = multer.memoryStorage();
 
+// Filter for accepting only image files
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new ApiError("Only image files are allowed!", HttpStatus.BadRequest), false);
+    cb(
+      new AppError("Only image files are allowed", HttpStatus.BadRequest),
+      false,
+    );
   }
 };
 
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
 });
 
-exports.uploadProductImages = upload.array("images", 10);
+// Reusable middlewares
+exports.uploadSingleImage = (fieldName = FileFields.IMAGE) =>
+  upload.single(fieldName);
+exports.uploadMultipleImages = (fieldName = FileFields.IMAGE, maxCount = 5) =>
+  upload.array(fieldName, maxCount);
