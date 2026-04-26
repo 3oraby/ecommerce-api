@@ -3,9 +3,10 @@ const { z } = require("zod");
 exports.createCategorySchema = z.object({
   body: z
     .object({
-      name: z.string().min(2, "Name must be at least 2 characters"),
+      name: z
+        .string({ message: "name is required" })
+        .min(2, "Name must be at least 2 characters"),
       description: z.string().optional(),
-      image: z.string().url("Image must be a valid URL").optional(),
     })
     .strict(),
 });
