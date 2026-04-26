@@ -74,8 +74,6 @@ exports.createProduct = asyncHandler(async (req, res) => {
     productData.images = imageUrls;
   }
 
-  console.log(productData);
-
   const product = await productsService.createProduct(
     req.sellerProfile.id,
     productData,
