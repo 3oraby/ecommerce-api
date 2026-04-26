@@ -10,6 +10,8 @@ const {
   userIdParamsSchema,
 } = require("./user.validation");
 const { authenticate } = require("../../middlewares/authenticate.middleware");
+const { uploadSingleImage } = require("../../middlewares/upload.middleware");
+const fileFields = require("../../enums/fileFields.enum");
 
 const router = express.Router();
 
@@ -17,7 +19,12 @@ router.use(authenticate);
 
 // --- ANY USER ---
 router.get("/me", userController.getMe);
-router.patch("/me", validate(updateMeSchema), userController.updateMe);
+router.patch(
+  "/me",
+  uploadSingleImage(),
+  validate(updateMeSchema),
+  userController.updateMe,
+);
 router.delete("/me", userController.deleteMe);
 
 // --- ADMIN ONLY ---

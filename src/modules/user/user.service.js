@@ -34,10 +34,6 @@ exports.getUserByIdService = async (id) => {
 };
 
 exports.updateUserByIdService = async (id, updateData) => {
-  if (Object.keys(updateData).length === 0) {
-    throw new ApiError("Request body cannot be empty", HttpStatus.BadRequest);
-  }
-
   if (updateData.password) {
     throw new ApiError(
       "wrong route, you can not update password",

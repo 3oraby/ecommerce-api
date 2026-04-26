@@ -74,7 +74,6 @@ exports.updateMeSchema = z.object({
           },
         )
         .optional(),
-      profile_image: z.string().url("Invalid URL").optional(),
       birth_date: z
         .string()
         .regex(
@@ -84,9 +83,6 @@ exports.updateMeSchema = z.object({
         .optional(),
     })
     .strict()
-    .refine((data) => Object.keys(data).length > 0, {
-      message: "Request body cannot be empty",
-    }),
 });
 
 exports.userIdParamsSchema = z.object({

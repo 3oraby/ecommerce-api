@@ -4,6 +4,8 @@ const asyncHandler = require("../../utils/asyncHandler");
 const sendResponse = require("../../utils/sendResponse");
 const { sanitizeUser } = require("./user.utils");
 const { clearCookies } = require("../auth/cookie.service");
+const uploadService = require("../../services/storage/upload.service");
+const uploadFolders = require("../../enums/uploadFolders.enum");
 
 // --- ADMIN ONLY ---
 exports.createUser = asyncHandler(async (req, res) => {
@@ -79,7 +81,14 @@ exports.getMe = asyncHandler(async (req, res) => {
 });
 
 exports.updateMe = asyncHandler(async (req, res) => {
-  const user = await userService.updateUserByIdService(req.user.id, req.body);
+  let updateData = { ...req.body };
+
+  if (req.file) {
+    const imageUrl = await uploadService.uploadImage(req.file, uploadFolders.USERS);
+    updateData.profile_image = imageUrl;
+  }
+
+  const user = await userService.updateUserByIdService(req.user.id, updateData);
 
   sendResponse({
     res,
