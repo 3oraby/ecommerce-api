@@ -22,7 +22,6 @@ exports.createUserSchema = z.object({
           "Invalid date format. Expected YYYY-MM-DD",
         )
         .optional(),
-      profile_image: z.string().url("Invalid URL").optional(),
       role: z.nativeEnum(Roles).optional(),
       account_status: z.nativeEnum(AccountStatus).optional(),
     })
@@ -44,7 +43,6 @@ exports.updateUserSchema = z.object({
         .optional(),
       role: z.nativeEnum(Roles).optional(),
       account_status: z.nativeEnum(AccountStatus).optional(),
-      profile_image: z.string().url("Invalid URL").optional(),
       birth_date: z
         .string()
         .regex(
@@ -82,7 +80,7 @@ exports.updateMeSchema = z.object({
         )
         .optional(),
     })
-    .strict()
+    .strict(),
 });
 
 exports.userIdParamsSchema = z.object({

@@ -1,0 +1,1301 @@
+openapi: 3.0.0
+info:
+  title: Ecommerce API
+  version: 1.0.0
+servers:
+  - url: https://{{url}}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+tags:
+  - name: users
+  - name: auths
+  - name: countries
+  - name: states
+  - name: cities
+  - name: addresses
+  - name: categories
+  - name: sellerProfiles
+  - name: home
+  - name: products
+  - name: favorites
+  - name: carts
+  - name: reviews
+  - name: orders
+paths:
+  /users:
+    get:
+      tags:
+        - users
+      summary: getAllUsers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - users
+      summary: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Mohamed Ahmed
+                email: oraby@example.com
+                password: '12345678'
+                phone: '01011088764'
+                birth_date: '2000-05-15'
+                role: CUSTOMER
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/1:
+    get:
+      tags:
+        - users
+      summary: getUserByAdmin
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - users
+      summary: updateUserByAdmin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Mohamed Updated
+                phone: '01123456789'
+                role: SELLER
+                account_status: ACTIVE
+                birth_date: '2000-05-15'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - users
+      summary: deleteUserByAdmin
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /users/me:
+    get:
+      tags:
+        - users
+      summary: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - users
+      summary: updateMe
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                  example: oraby
+                phone:
+                  type: integer
+                  example: '01011088624'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - users
+      summary: deleteMe
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/signup:
+    post:
+      tags:
+        - auths
+      summary: signUp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: oraby
+                email: mohaahmed21102003@gmail.com
+                password: '01011088624'
+                role: admin
+                phone: '01011088624'
+                birth_date: '2003-08-20'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/login:
+    post:
+      tags:
+        - auths
+      summary: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: mohamedahmed21102003@gmail.com
+                password: '01011088624'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/logout:
+    post:
+      tags:
+        - auths
+      summary: logout
+      requestBody:
+        content: {}
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/logout-all-devices:
+    post:
+      tags:
+        - auths
+      summary: logouotAllDevices
+      requestBody:
+        content: {}
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/refresh-token:
+    post:
+      tags:
+        - auths
+      summary: refresh-token
+      requestBody:
+        content: {}
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/verify-email:
+    post:
+      tags:
+        - auths
+      summary: verify-email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: mohaahmed21102003@gmail.com
+                otp: '970325'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/resend-email-verification:
+    post:
+      tags:
+        - auths
+      summary: resendEmailVerification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: mohaahmed21102003@gmail.com
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/forgot-password:
+    post:
+      tags:
+        - auths
+      summary: forgetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: mohaahmed21102003@gmail.com
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/verify-reset-otp:
+    post:
+      tags:
+        - auths
+      summary: verifyResetOtp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: mohaahmed21102003@gmail.com
+                otp: '149183'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/resend-password-reset-otp:
+    post:
+      tags:
+        - auths
+      summary: resendPasswordResetOtp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: mohaahmed21102003@gmail.com
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/reset-password:
+    patch:
+      tags:
+        - auths
+      summary: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                resetToken: '{
+    {resetToken
+    }
+}'
+                newPassword: '01011088624'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /auth/update-password:
+    patch:
+      tags:
+        - auths
+      summary: updatePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                currentPassword: '01011088624'
+                newPassword: 01011088624@tito
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /countries:
+    get:
+      tags:
+        - countries
+      summary: getAllCountries
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - countries
+      summary: createCountry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Egypt
+                code: EG
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /countries/1:
+    get:
+      tags:
+        - countries
+      summary: getCountryById
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - countries
+      summary: updateCountry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: United Arab Emirates
+                code: AE
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - countries
+      summary: deleteCountry
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /countries/2/states:
+    get:
+      tags:
+        - states
+      summary: getStatesByCountry
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /states/1:
+    get:
+      tags:
+        - states
+      summary: getStateById
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /states/all:
+    get:
+      tags:
+        - states
+      summary: getAllStates
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /countries/1/states:
+    post:
+      tags:
+        - states
+      summary: createState
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Cairo2
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /countries/1/states/258:
+    patch:
+      tags:
+        - states
+      summary: updateState
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: updatedTest
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - states
+      summary: deleteState
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /states/2/cities:
+    get:
+      tags:
+        - cities
+      summary: getCitiesByState
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /cities/1:
+    get:
+      tags:
+        - cities
+      summary: getCityById
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /cities/all:
+    get:
+      tags:
+        - cities
+      summary: getAllCities
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /states/1/cities:
+    post:
+      tags:
+        - cities
+      summary: createCity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Cairo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /states/1/cities/1:
+    patch:
+      tags:
+        - cities
+      summary: updateState
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Cairo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - cities
+      summary: deleteState
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /addresses:
+    get:
+      tags:
+        - addresses
+      summary: getUserAddresses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - addresses
+      summary: createAddress
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                address_line1: 12 El Nasr Street, Building 5
+                address_line2: Apartment 10, Floor 3
+                country_id: 1
+                state_id: 2
+                city_id: 6
+                is_default: true
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /addresses/1:
+    get:
+      tags:
+        - addresses
+      summary: getAddressById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - addresses
+      summary: updateAddress
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example: "{\r\n    \"address_line1\": \"New Address Line 1\",\r\n    \"address_line2\": \"New Address Line 2\",\r\n    \"country_id\": 2,\r\n    \"state_id\": 9,\r\n    \"city_id\": 35\r\n    // \"is_default\": false\r\n}"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /addresses/9:
+    delete:
+      tags:
+        - addresses
+      summary: deleteAddress
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /addresses/9/default:
+    patch:
+      tags:
+        - addresses
+      summary: set-default address
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /categories:
+    get:
+      tags:
+        - categories
+      summary: getAllCategories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - categories
+      summary: createCategory
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                  example: test7
+                description:
+                  type: string
+                  example: description test
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /categories/12:
+    get:
+      tags:
+        - categories
+      summary: getCategoryById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /categories/1:
+    delete:
+      tags:
+        - categories
+      summary: deleteCategory
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - categories
+      summary: updateCategory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example: "{\r\n    \"name\": \"Smart Electronics\",\r\n    // \"image\": \"https://example.com/images/smart.jpg\",\r\n    \"description\": \"Smart devices and modern gadgets\"\r\n}"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers:
+    get:
+      tags:
+        - sellerProfiles
+      summary: getAllSellers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - sellerProfiles
+      summary: createSellerProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                store_name: Tech Store222
+                business_info: We sell electronics, accessories, and gadgets.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/2:
+    get:
+      tags:
+        - sellerProfiles
+      summary: getSellerById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /sellers/me:
+    get:
+      tags:
+        - sellerProfiles
+      summary: getMySellerProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - sellerProfiles
+      summary: updateMySellerProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                store_name: New Store Name
+                business_info: New description for the store
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - sellerProfiles
+      summary: deleteMySellerProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/home:
+    get:
+      tags:
+        - home
+      summary: getHomeData
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/all:
+    get:
+      tags:
+        - products
+      summary: getAllProducts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/seller:
+    get:
+      tags:
+        - products
+      summary: getSellerProducts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '1'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: '2'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/search:
+    get:
+      tags:
+        - products
+      summary: searchInProducts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+          example: '-price'
+        - name: fields
+          in: query
+          schema:
+            type: string
+          example: id,stock,price
+        - name: sort
+          in: query
+          schema:
+            type: string
+          example: stock
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /categories/2/products:
+    get:
+      tags:
+        - products
+      summary: getProductsByCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          example: samsung
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/21:
+    get:
+      tags:
+        - products
+      summary: getProductById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products:
+    post:
+      tags:
+        - products
+      summary: createProduct
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Anker Headphones
+                description:
+                  type: string
+                  example: Noise cancelling headphones with anker
+                price:
+                  type: integer
+                  example: '560'
+                stock:
+                  type: integer
+                  example: '9'
+                categories:
+                  type: integer
+                  example: '3'
+                images:
+                  type: string
+                  format: binary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/3:
+    patch:
+      tags:
+        - products
+      summary: updateProduct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: iPhone 15 Pro Max
+                description: Updated description
+                price: 48000
+                stock: 8
+                categories:
+                  - 3
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/4:
+    delete:
+      tags:
+        - products
+      summary: deleteProduct
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /favorites:
+    get:
+      tags:
+        - favorites
+      summary: getMyFavorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          example: '2'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /favorites/15:
+    post:
+      tags:
+        - favorites
+      summary: addToFavorites
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /favorites/3:
+    delete:
+      tags:
+        - favorites
+      summary: deleteFromFavorites
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /carts:
+    get:
+      tags:
+        - carts
+      summary: getMyCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /carts/items/12:
+    post:
+      tags:
+        - carts
+      summary: addToCart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                quantity: 12
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - carts
+      summary: deleteFromCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /carts/15:
+    patch:
+      tags:
+        - carts
+      summary: updateCartItem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                quantity: 12
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /products/12/reviews:
+    get:
+      tags:
+        - reviews
+      summary: getProductReviews
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    patch:
+      tags:
+        - reviews
+      summary: updateReview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                rating: 1
+                review: Very bad product, not recommended!
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - reviews
+      summary: createReview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                rating: 5
+                review: Very good, highly recommended!
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - reviews
+      summary: deleteReview
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/checkout:
+    post:
+      tags:
+        - orders
+      summary: checkout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                address_id: 10
+                payment_method: COD
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/1/cancel:
+    patch:
+      tags:
+        - orders
+      summary: cancelOrder
+      requestBody:
+        content: {}
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/me:
+    get:
+      tags:
+        - orders
+      summary: getMyOrders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/myCanceled:
+    get:
+      tags:
+        - orders
+      summary: getMyCanceledOrders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/seller:
+    get:
+      tags:
+        - orders
+      summary: getSellerOrders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/2:
+    get:
+      tags:
+        - orders
+      summary: getOrderById
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/1/summary:
+    get:
+      tags:
+        - orders
+      summary: getOrderSummary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /orders/5/status:
+    patch:
+      tags:
+        - orders
+      summary: updateOrderStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                status: DELIVERED
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

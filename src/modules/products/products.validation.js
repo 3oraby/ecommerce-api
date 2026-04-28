@@ -49,7 +49,6 @@ exports.updateProductSchema = z.object({
       price: z.number().positive().optional(),
       stock: z.number().int().nonnegative().optional(),
       categories: z.array(z.number().int()).min(1).optional(),
-      main_image: z.string().url().optional(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {

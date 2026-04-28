@@ -13,6 +13,13 @@ const cookieParser = require("cookie-parser");
 const compression = require("compression");
 const cors = require("cors");
 const path = require("path");
+const swaggerUi = require("swagger-ui-express");
+const fs = require("fs");
+const yaml = require("js-yaml");
+
+const swaggerDocument = yaml.load(
+  fs.readFileSync(path.join(__dirname, "openapi.yaml"), "utf8"),
+);
 
 // ROUTES
 const userRouter = require("./modules/user/user.routes");
@@ -77,6 +84,9 @@ app.use(compression());
 
 // Static files (optional)
 app.use(express.static(path.join(__dirname, "public")));
+
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
