@@ -3,7 +3,12 @@ info:
   title: Ecommerce API
   version: 1.0.0
 servers:
-  - url: https://{{url}}
+  - url: "http://localhost:3000/api/v1"
+    description: Dev
+  
+  - url: "https://ecommerce-api-production-8e4e.up.railway.app"
+    description: Production
+
 components:
   securitySchemes:
     bearerAuth:
