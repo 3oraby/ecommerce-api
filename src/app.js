@@ -86,7 +86,7 @@ app.use(compression());
 app.use(express.static(path.join(__dirname, "public")));
 
 // Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/api/v1/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
