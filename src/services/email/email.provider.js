@@ -11,6 +11,9 @@ const createTransporter = () => {
         user: process.env.GMAIL_USERNAME,
         pass: process.env.GMAIL_PASSWORD,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
   }
 
