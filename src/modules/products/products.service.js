@@ -7,25 +7,21 @@ const { sanitizeAndValidateIds } = require("../../utils/array.util");
 const { Op } = require("sequelize");
 const Roles = require("../../enums/roles.enum");
 
-const buildProductQuery = (query, user) => {
+const { cacheOrFetch } = require("../../services/cache/cache.helper");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const {
+  invalidateProductCaches,
+} = require("../../services/cache/cacheInvalidation.helper");
+
+const buildProductQuery = (query, options = {}) => {
   const filterParams = { ...query };
 
   const searchKeyword = query.q || query.keyword;
   const categoryId = query.category;
 
-  const excluded = [
-    "q",
-    "keyword",
-    "category",
-    "minPrice",
-    "maxPrice",
-    "inStock",
-  ];
-  excluded.forEach((el) => delete filterParams[el]);
-
-  if (user && user.role === Roles.SELLER && user.sellerProfile) {
-    filterParams.seller_id = user.sellerProfile.id;
-  }
+  ["q", "keyword", "category", "minPrice", "maxPrice", "inStock"].forEach(
+    (el) => delete filterParams[el],
+  );
 
   const features = new ApiFeatures({}, filterParams)
     .filter()
@@ -34,6 +30,10 @@ const buildProductQuery = (query, user) => {
     .paginate();
 
   const where = { ...(features.parsedFilters || {}) };
+
+  if (options.sellerId) {
+    where.seller_id = options.sellerId;
+  }
 
   if (query.minPrice || query.maxPrice) {
     where.price = {};
@@ -59,66 +59,87 @@ const buildProductQuery = (query, user) => {
   };
 };
 
+const normalizeQuery = (q) => ({
+  page: q.parsedPagination?.page || 1,
+  limit: q.parsedPagination?.limit || 10,
+  sort: q.parsedSort || null,
+  search: q.searchKeyword || null,
+  categoryId: q.categoryId || null,
+});
 
 exports.getProductById = async (id) => {
-  const product = await productsRepository.findById(id);
+  const key = cacheKeyBuilder.product(id);
 
-  if (!product) {
-    throw new ApiError("Product not found", HttpStatus.NOT_FOUND);
-  }
+  return cacheOrFetch(key, async () => {
+    const product = await productsRepository.findById(id);
 
-  return product;
+    if (!product) {
+      throw new ApiError("Product not found", HttpStatus.NOT_FOUND);
+    }
+
+    return product;
+  });
 };
 
 exports.getProductsByCategory = async (categoryId, user, query) => {
   const category = await categoriesRepository.findByPk(categoryId);
-  if (!category) {
-    throw new ApiError("Category not found", HttpStatus.NotFound);
-  }
 
-  const builtQuery = buildProductQuery(query, user);
-  builtQuery.categoryId = categoryId;
+  if (!category) throw new ApiError("Category not found", HttpStatus.NOT_FOUND);
 
-  const products =
-    await productsRepository.findWithCategoriesOrSearch(builtQuery);
+  const built = buildProductQuery(query, user);
+  built.categoryId = categoryId;
 
-  if (!products.data || products.total === 0) {
+  const norm = normalizeQuery(built);
+
+  const key = cacheKeyBuilder.categoryProducts(categoryId, norm);
+
+  return cacheOrFetch(key, async () => {
+    const result = await productsRepository.findWithCategoriesOrSearch(built);
+
     return {
-      total: 0,
-      page: 1,
-      limit: builtQuery.parsedPagination.limit,
-      data: [],
+      total: result.total || 0,
+      page: norm.page,
+      limit: norm.limit,
+      data: result.data || [],
     };
-  }
-
-  return products;
+  });
 };
 
-exports.getSellerProducts = async (user, query) => {
-  const builtQuery = buildProductQuery(query, user);
+exports.getSellerProducts = async (query, sellerProfile) => {
+  const builtQuery = buildProductQuery(query, {
+    sellerId: sellerProfile?.id,
+  });
+  const norm = normalizeQuery(builtQuery);
 
-  const products =
-    await productsRepository.findWithCategoriesOrSearch(builtQuery);
+  const key = cacheKeyBuilder.sellerProducts(sellerProfile?.id, norm);
 
-  if (!products.data || products.total === 0) {
+  return cacheOrFetch(key, async () => {
+    const result =
+      await productsRepository.findWithCategoriesOrSearch(builtQuery);
+
     return {
-      total: 0,
-      page: 1,
-      limit: builtQuery.parsedPagination.limit,
-      data: [],
+      total: result.total || 0,
+      page: norm.page,
+      limit: norm.limit,
+      data: result.data || [],
     };
-  }
-
-  return products;
+  });
 };
 
 exports.searchProducts = async (query, user) => {
-  const builtQuery = buildProductQuery(query, user);
+  const built = buildProductQuery(query, user);
+  const norm = normalizeQuery(built);
 
-  return await productsRepository.findWithCategoriesOrSearch(builtQuery);
+  const key = cacheKeyBuilder.products(norm);
+
+  return cacheOrFetch(
+    key,
+    () => productsRepository.findWithCategoriesOrSearch(built),
+    "5m",
+  );
 };
 
-exports.createProduct = async (sellerProfileId, data) => {
+exports.createProduct = async (sellerId, data) => {
   const categories = await sanitizeAndValidateIds({
     ids: data.categories,
     findByIds: categoriesRepository.findByIds,
@@ -126,7 +147,7 @@ exports.createProduct = async (sellerProfileId, data) => {
   });
 
   const { images = [], categories: _, ...productData } = data;
-  productData.seller_id = sellerProfileId;
+  productData.seller_id = sellerId;
 
   if (!images.length) {
     throw new ApiError(
@@ -137,16 +158,20 @@ exports.createProduct = async (sellerProfileId, data) => {
 
   productData.main_image = images[0];
 
-  const productImages = images.map((url, index) => ({
+  const productImages = images.map((url, i) => ({
     image_url: url,
-    is_main: index === 0,
+    is_main: i === 0,
   }));
 
-  return await productsRepository.createProductWithCategoriesAndImages(
+  const product = await productsRepository.createProductWithCategoriesAndImages(
     productData,
     categories,
     productImages,
   );
+
+  await invalidateProductCaches();
+
+  return product;
 };
 
 exports.updateProduct = async (id, data) => {
@@ -163,43 +188,46 @@ exports.updateProduct = async (id, data) => {
   const productData = { ...data };
   delete productData.categories;
 
-  return await productsRepository.updateProductWithCategories(
+  const product = await productsRepository.updateProductWithCategories(
     id,
     productData,
     categories,
   );
+
+  await invalidateProductCaches(id);
+
+  return product;
 };
 
 exports.deleteProduct = async (id) => {
   const deleted = await productsRepository.deleteProduct(id);
 
-  if (!deleted) {
-    throw new ApiError("Product not found", HttpStatus.NotFound);
-  }
+  if (!deleted) throw new ApiError("Product not found", HttpStatus.NOT_FOUND);
+
+  await invalidateProductCaches();
 
   return deleted;
 };
 
 exports.getHomeData = async () => {
-  const [
-    featuredProducts,
-    newArrivals,
-    topRated,
-    bestSellers,
-    categories,
-  ] = await Promise.all([
-    productsRepository.getFeaturedProducts(),
-    productsRepository.getNewArrivals(),
-    productsRepository.getTopRatedProducts(),
-    productsRepository.getBestSellers(),
-    productsRepository.getHomeCategories(),
-  ]);
+  const key = cacheKeyBuilder.homeData();
 
-  return {
-    featured_products: featuredProducts,
-    new_arrivals: newArrivals,
-    top_rated: topRated,
-    best_sellers: bestSellers,
-    categories,
-  };
+  return cacheOrFetch(key, async () => {
+    const [featured, newArrivals, topRated, bestSellers, categories] =
+      await Promise.all([
+        productsRepository.getFeaturedProducts(),
+        productsRepository.getNewArrivals(),
+        productsRepository.getTopRatedProducts(),
+        productsRepository.getBestSellers(),
+        productsRepository.getHomeCategories(),
+      ]);
+
+    return {
+      featured_products: featured,
+      new_arrivals: newArrivals,
+      top_rated: topRated,
+      best_sellers: bestSellers,
+      categories,
+    };
+  });
 };

@@ -27,7 +27,10 @@ exports.getProductById = asyncHandler(async (req, res) => {
 });
 
 exports.getSellerProducts = asyncHandler(async (req, res) => {
-  const products = await productsService.getSellerProducts(req.user, req.query);
+  const products = await productsService.getSellerProducts(
+    req.query,
+    req.sellerProfile,
+  );
 
   sendResponse({
     res,

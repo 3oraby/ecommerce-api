@@ -3,6 +3,9 @@ dotenv.config();
 
 const app = require("./app");
 const sequelize = require("./config/sequelize");
+const { connectRedis } = require("./config/redis");
+
+connectRedis();
 
 sequelize
   .authenticate()

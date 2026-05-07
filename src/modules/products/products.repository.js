@@ -130,6 +130,7 @@ exports.findWithCategoriesOrSearch = async ({
       {
         model: ProductImage,
         as: "images",
+        attributes: ["id", "image_url"],
         required: false,
       },
     ],
@@ -148,7 +149,6 @@ exports.findWithCategoriesOrSearch = async ({
   }
 
   const result = await Product.findAndCountAll(options);
-
   return {
     total: result.count,
     page: Math.floor(parsedPagination.offset / parsedPagination.limit) + 1,
