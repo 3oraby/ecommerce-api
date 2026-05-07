@@ -5,8 +5,7 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const { sanitizeAndValidateIds } = require("../../utils/array.util");
 const { Op } = require("sequelize");
-const Roles = require("../../enums/roles.enum");
-
+const { setCache } = require("../../services/cache/cache.service");
 const { cacheOrFetch } = require("../../services/cache/cache.helper");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const {
@@ -91,7 +90,7 @@ exports.getProductsByCategory = async (categoryId, user, query) => {
 
   const norm = normalizeQuery(built);
 
-  const key = cacheKeyBuilder.categoryProducts(categoryId, norm);
+  const key = cacheKeyBuilder.products(norm);
 
   return cacheOrFetch(key, async () => {
     const result = await productsRepository.findWithCategoriesOrSearch(built);
@@ -169,6 +168,9 @@ exports.createProduct = async (sellerId, data) => {
     productImages,
   );
 
+  const cacheKey = cacheKeyBuilder.product(product.id);
+
+  await setCache(cacheKey, product);
   await invalidateProductCaches();
 
   return product;
@@ -194,7 +196,7 @@ exports.updateProduct = async (id, data) => {
     categories,
   );
 
-  await invalidateProductCaches(id);
+  await invalidateProductCaches({ productId: id });
 
   return product;
 };
@@ -204,7 +206,7 @@ exports.deleteProduct = async (id) => {
 
   if (!deleted) throw new ApiError("Product not found", HttpStatus.NOT_FOUND);
 
-  await invalidateProductCaches();
+  await invalidateProductCaches({ productId: id });
 
   return deleted;
 };

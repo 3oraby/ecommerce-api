@@ -43,6 +43,7 @@ exports.findAll = async ({
 
   return await Product.findAndCountAll(options);
 };
+
 exports.createProductWithCategoriesAndImages = async (
   productData,
   categoryIds,

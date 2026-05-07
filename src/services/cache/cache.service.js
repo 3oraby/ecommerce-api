@@ -16,17 +16,9 @@ exports.deleteCache = async (key) => {
 };
 
 exports.deleteByPattern = async (pattern) => {
-  const stream = redisClient.scanIterator({
-    MATCH: pattern,
-    COUNT: 100,
-  });
+  const keys = await redisClient.keys(pattern);
 
-  const keys = [];
-  for await (const key of stream) {
-    keys.push(key);
-  }
+  if (!keys.length) return;
 
-  if (keys.length) {
-    await redisClient.del(keys);
-  }
+  await redisClient.del(keys);
 };

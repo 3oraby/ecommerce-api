@@ -1,24 +1,15 @@
 const patterns = require("./cachePatterns.util");
-const { deleteByPattern } = require("./cache.service");
+const { deleteByPattern, deleteCache } = require("./cache.service");
 
-exports.invalidateAllProductCaches = async ({
-  productId,
-  sellerId,
-  categoryIds = [],
-}) => {
+exports.invalidateProductCaches = async ({ productId } = {}) => {
   const promises = [
-    deleteByPattern(patterns.product.all),
     deleteByPattern(patterns.products.all),
-    deleteByPattern(patterns.home.all),
+    deleteCache(patterns.home.all),
   ];
 
-  if (sellerId) {
-    promises.push(deleteByPattern(patterns.products.seller(sellerId)));
+  if (productId) {
+    promises.push(deleteCache(patterns.product.this(productId)));
   }
-
-  categoryIds.forEach((id) => {
-    promises.push(deleteByPattern(patterns.products.category(id)));
-  });
 
   await Promise.all(promises);
 };

@@ -17,9 +17,6 @@ const cacheKeyBuilder = {
 
   products: (query = {}) => `products:${buildQueryKey(query)}`,
 
-  categoryProducts: (id, query = {}) =>
-    `products:category:${id}:${buildQueryKey(query)}`,
-
   sellerProducts: (id, query = {}) =>
     `products:seller:${id}:${buildQueryKey(query)}`,
 

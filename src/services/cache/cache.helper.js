@@ -6,7 +6,6 @@ exports.cacheOrFetch = async (key, fetchFn, ttl = process.env.CACHE_TTL) => {
   const cached = await getCache(key);
 
   if (cached) {
-    console.log("cachinggggggg")
     return cached;
   }
 

@@ -1,13 +1,15 @@
 module.exports = {
   product: {
     all: "product:*",
+    this(id) {
+      return `product:${id}`;
+    },
   },
-
   products: {
     all: "products:*",
-    category: (id) => `products:category:${id}:*`,
-    seller: (id) => `products:seller:${id}:*`,
+    seller(id) {
+      return `products:seller:${id}:*`;
+    },
   },
-
   home: { all: "home" },
 };
