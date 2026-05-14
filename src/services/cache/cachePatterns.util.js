@@ -12,4 +12,7 @@ module.exports = {
     },
   },
   home: { all: "home" },
+  paymentMethods: {
+    all: "payment:methods*",
+  },
 };

@@ -35,6 +35,7 @@ const favoriteRouter = require("./modules/favorites/favorites.routes");
 const cartRouter = require("./modules/cart/cart.routes");
 const ordersRouter = require("./modules/orders/orders.routes");
 const reviewsRouter = require("./modules/reviews/reviews.routes");
+const paymentsRouter = require("./modules/payments/payments.routes");
 
 // trust proxy (important if deployed behind nginx / render / railway)
 app.set("trust proxy", 1);
@@ -101,6 +102,7 @@ app.use("/api/v1/favorites", favoriteRouter);
 app.use("/api/v1/carts", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
 app.use("/api/v1/reviews", reviewsRouter);
+app.use("/api/v1/payments", paymentsRouter);
 
 // Catch all unhandled routes
 app.all(/.*/, urlNotFoundMiddleware);

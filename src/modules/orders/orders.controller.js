@@ -5,19 +5,20 @@ const ordersService = require("./orders.service");
 const ApiFeatures = require("../../utils/apiFeatures");
 
 exports.checkout = asyncHandler(async (req, res, next) => {
-  const { address_id, payment_method } = req.body;
+  const { address_id, payment_method, wallet_phone } = req.body;
 
-  const order = await ordersService.checkout(
+  const result = await ordersService.checkout(
     req.user.id,
     address_id,
     payment_method,
+    wallet_phone
   );
 
   sendResponse({
     res,
     statusCode: HttpStatus.CREATED,
     message: "Order placed successfully",
-    data: order,
+    data: result,
   });
 });
 

@@ -13,3 +13,7 @@ exports.invalidateProductCaches = async ({ productId } = {}) => {
 
   await Promise.all(promises);
 };
+
+exports.invalidatePaymentMethodsCache = async () => {
+  await deleteByPattern(patterns.paymentMethods.all);
+};

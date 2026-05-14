@@ -2,15 +2,26 @@ require("dotenv").config();
 
 module.exports = {
   development: {
-    url: process.env.DB_URL,
-    dialect: "mysql",
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
+    dialect: process.env.DB_DIALECT || "mysql",
+    logging: false,
   },
+
   test: {
-    url: process.env.DB_URL,
-    dialect: "mysql",
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
+    dialect: process.env.DB_DIALECT || "mysql",
+    logging: false,
   },
+
   production: {
-    url: process.env.DB_URL,
+    use_env_variable: "DB_URL",
     dialect: "mysql",
+    logging: false,
   },
 };

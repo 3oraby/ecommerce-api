@@ -27,6 +27,26 @@ const Payment = sequelize.define(
       type: DataTypes.ENUM(Object.values(PaymentStatus)),
       defaultValue: PaymentStatus.PENDING,
     },
+    transaction_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    paymob_order_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    paymob_payment_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    payment_key: {
+      type: DataTypes.STRING(2048),
+      allowNull: true,
+    },
+    paid_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "payments",

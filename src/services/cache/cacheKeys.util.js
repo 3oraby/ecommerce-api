@@ -21,6 +21,8 @@ const cacheKeyBuilder = {
     `products:seller:${id}:${buildQueryKey(query)}`,
 
   homeData: () => "home",
+
+  paymentMethods: () => "payment:methods",
 };
 
 module.exports = cacheKeyBuilder;

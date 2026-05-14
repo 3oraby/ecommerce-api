@@ -20,7 +20,7 @@ Shipping.belongsTo(Order, { foreignKey: "order_id" });
 
 OrderItem.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 
-exports.processCheckout = async (cartId, orderData) => {
+exports.processCheckout = async (cartId, orderData, clearCart = false) => {
   return await sequelize.transaction(async (t) => {
     // Create order and related records
     const order = await Order.create(orderData, {
@@ -32,14 +32,27 @@ exports.processCheckout = async (cartId, orderData) => {
       ],
     });
 
-    // Mark cart as ordered
-    await Cart.update(
-      { status: "ORDERED" },
-      { where: { id: cartId }, transaction: t },
-    );
+    if (clearCart) {
+      await Cart.update(
+        { status: "ORDERED" },
+        { where: { id: cartId }, transaction: t },
+      );
+    }
 
     return order;
   });
+};
+
+exports.updatePaymentByOrderId = async (orderId, data) => {
+  return await Payment.update(data, { where: { order_id: orderId } });
+};
+
+exports.updatePaymentById = async (paymentId, data) => {
+  return await Payment.update(data, { where: { id: paymentId } });
+};
+
+exports.createPayment = async (data, transaction = null) => {
+  return await Payment.create(data, { transaction });
 };
 
 exports.findOrderById = async (id) => {
@@ -172,7 +185,6 @@ exports.findSellerOrders = async (userId, filters) => {
     data,
   };
 };
-
 exports.updateOrderStatus = async (orderId, status) => {
   return await sequelize.transaction(async (t) => {
     const freshOrder = await Order.findByPk(orderId, {
@@ -192,36 +204,72 @@ exports.updateOrderStatus = async (orderId, status) => {
 
     const wasDeliveredBefore = freshOrder.status === OrderStatus.DELIVERED;
 
+    // =========================
+    // UPDATE ORDER STATUS
+    // =========================
+
     await freshOrder.update({ status }, { transaction: t });
 
-    const shippingPayload = { status };
+    // =========================
+    // SHIPPING STATUS LOGIC
+    // =========================
+
+    const shippingPayload = {};
+
+    if (status === OrderStatus.SHIPPED) {
+      shippingPayload.status = "SHIPPED";
+    }
 
     if (status === OrderStatus.DELIVERED) {
+      shippingPayload.status = "DELIVERED";
       shippingPayload.delivered_at = new Date();
     }
 
     if (status === OrderStatus.CANCELED) {
+      shippingPayload.status = "CANCELED";
       shippingPayload.canceled_at = new Date();
     }
 
-    await Shipping.update(shippingPayload, {
-      where: { order_id: freshOrder.id },
-      transaction: t,
-    });
+    // ONLY update shipping if needed
+    if (Object.keys(shippingPayload).length > 0) {
+      await Shipping.update(shippingPayload, {
+        where: { order_id: freshOrder.id },
+        transaction: t,
+      });
+    }
+
+    // =========================
+    // PAYMENT STATUS LOGIC
+    // =========================
 
     if (status === OrderStatus.DELIVERED) {
       await Payment.update(
         { status: "COMPLETED" },
-        { where: { order_id: freshOrder.id }, transaction: t },
+        {
+          where: {
+            order_id: freshOrder.id,
+          },
+          transaction: t,
+        },
       );
     }
 
     if (status === OrderStatus.CANCELED) {
       await Payment.update(
         { status: "FAILED" },
-        { where: { order_id: freshOrder.id }, transaction: t },
+        {
+          where: {
+            order_id: freshOrder.id,
+            status: "PENDING",
+          },
+          transaction: t,
+        },
       );
     }
+
+    // =========================
+    // STOCK DEDUCTION
+    // =========================
 
     if (status === OrderStatus.DELIVERED && !wasDeliveredBefore) {
       const productIds = freshOrder.items.map((i) => i.product_id);

@@ -9,6 +9,24 @@ exports.findActiveCartByUser = async (userId) => {
   });
 };
 
+exports.getCartWithItemsById = async (cartId) => {
+  return await Cart.findOne({
+    where: { id: cartId, status: CartStatus.ACTIVE },
+    include: [
+      {
+        model: CartItem,
+        as: "items",
+        include: [
+          {
+            model: Product,
+            as: "product",
+          },
+        ],
+      },
+    ],
+  });
+};
+
 exports.createCart = async (userId) => {
   return await Cart.create({
     user_id: userId,
