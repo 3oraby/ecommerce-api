@@ -185,6 +185,7 @@ exports.findSellerOrders = async (userId, filters) => {
     data,
   };
 };
+
 exports.updateOrderStatus = async (orderId, status) => {
   return await sequelize.transaction(async (t) => {
     const freshOrder = await Order.findByPk(orderId, {
@@ -204,15 +205,7 @@ exports.updateOrderStatus = async (orderId, status) => {
 
     const wasDeliveredBefore = freshOrder.status === OrderStatus.DELIVERED;
 
-    // =========================
-    // UPDATE ORDER STATUS
-    // =========================
-
     await freshOrder.update({ status }, { transaction: t });
-
-    // =========================
-    // SHIPPING STATUS LOGIC
-    // =========================
 
     const shippingPayload = {};
 
@@ -230,17 +223,12 @@ exports.updateOrderStatus = async (orderId, status) => {
       shippingPayload.canceled_at = new Date();
     }
 
-    // ONLY update shipping if needed
     if (Object.keys(shippingPayload).length > 0) {
       await Shipping.update(shippingPayload, {
         where: { order_id: freshOrder.id },
         transaction: t,
       });
     }
-
-    // =========================
-    // PAYMENT STATUS LOGIC
-    // =========================
 
     if (status === OrderStatus.DELIVERED) {
       await Payment.update(
@@ -266,10 +254,6 @@ exports.updateOrderStatus = async (orderId, status) => {
         },
       );
     }
-
-    // =========================
-    // STOCK DEDUCTION
-    // =========================
 
     if (status === OrderStatus.DELIVERED && !wasDeliveredBefore) {
       const productIds = freshOrder.items.map((i) => i.product_id);

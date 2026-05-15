@@ -4,7 +4,6 @@ const PaymentStatus = require("../../enums/paymentStatus.enum");
 const OrderStatus = require("../../enums/orderStatus.enum");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
-const sequelize = require("../../config/sequelize");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const { cacheOrFetch } = require("../../services/cache/cache.helper");
 const cartRepository = require("../cart/cart.repository");
@@ -12,8 +11,6 @@ const ordersRepository = require("../orders/orders.repository");
 
 exports.handleWebhook = async (queryData, hmac) => {
   try {
-    console.log("Webhook received");
-
     if (!queryData || !queryData.obj) {
       throw new ApiError("Invalid payload structure", HttpStatus.BAD_REQUEST);
     }
@@ -25,34 +22,23 @@ exports.handleWebhook = async (queryData, hmac) => {
     }
 
     const { obj } = queryData;
-    console.log("obj: ", obj);
     const success = obj.success;
     const transactionId = obj.id;
     const paymobOrderId = obj.order.id;
     const merchantOrderId = obj.order.merchant_order_id;
     const pending = obj.pending;
     const amountCents = obj.amount_cents;
-    console.log("success: ", success);
-    console.log("transactionId: ", transactionId);
-    console.log("paymobOrderId: ", paymobOrderId);
-    console.log("merchantOrderId: ", merchantOrderId);
-    console.log("pending: ", pending);
-    console.log("amountCents: ", amountCents);
 
     const existingPayment = await paymentsRepository.checkDuplicatePayment(
       transactionId,
       paymobOrderId,
     );
-    console.log("existingPayment: ", existingPayment);
+
     if (existingPayment) {
-      console.log("Duplicate webhook ignored");
       return { success: true, message: "Webhook already processed" };
     }
 
-    console.log("success: ", success);
-
     if (!success || pending) {
-      console.log("Payment failed or pending, ignoring");
       return { success: true, message: "Payment failed/pending" };
     }
 
@@ -124,7 +110,6 @@ exports.handleWebhook = async (queryData, hmac) => {
 
     await ordersRepository.processCheckout(cartId, orderData, true);
 
-    console.log("Deferred order created and payment completed");
     return {
       success: true,
       message: "Payment processed and order created successfully",

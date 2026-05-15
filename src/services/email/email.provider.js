@@ -1,14 +1,9 @@
 const nodemailer = require("nodemailer");
-const pug = require("pug");
-const path = require("path");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const SibApiV3Sdk = require("sib-api-v3-sdk");
 
-const renderTemplate = (templateName, data) => {
-  const templatePath = path.join(__dirname, "templates", `${templateName}.pug`);
-  return pug.renderFile(templatePath, data);
-};
+const { renderTemplate } = require("../../utils/templateRenderer.util");
 
 const createDevTransporter = () => {
   return nodemailer.createTransport({
@@ -25,13 +20,19 @@ const createDevTransporter = () => {
 };
 
 const brevoClient = SibApiV3Sdk.ApiClient.instance;
+
 brevoClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
 
 const brevoEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
-exports.sendEmail = async ({ to, subject, templateName, data }) => {
+exports.sendEmail = async ({ to, subject, templateName, data = {} }) => {
   try {
-    const html = renderTemplate(templateName, data);
+    const html = renderTemplate({
+      folder: "services",
+      moduleName: "email",
+      templateName,
+      data,
+    });
 
     if (process.env.NODE_ENV !== "production") {
       const transporter = createDevTransporter();

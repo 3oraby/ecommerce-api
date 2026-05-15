@@ -9,40 +9,54 @@ exports.checkDuplicatePayment = async (transactionId, paymobOrderId) => {
       [Op.or]: [
         { transaction_id: transactionId ? transactionId.toString() : null },
         { paymob_order_id: paymobOrderId ? paymobOrderId.toString() : null },
-      ]
-    }
+      ],
+    },
   });
 };
 
-exports.findPaymentByPaymobOrMerchantOrder = async (paymobOrderId, merchantOrderId) => {
+exports.findPaymentByPaymobOrMerchantOrder = async (
+  paymobOrderId,
+  merchantOrderId,
+) => {
   let payment = null;
   if (merchantOrderId) {
     payment = await Payment.findOne({ where: { order_id: merchantOrderId } });
   }
   if (!payment && paymobOrderId) {
-    payment = await Payment.findOne({ where: { paymob_order_id: paymobOrderId } });
+    payment = await Payment.findOne({
+      where: { paymob_order_id: paymobOrderId },
+    });
   }
   return payment;
 };
 
 exports.completePayment = async (id, data, transaction = null) => {
-  return await Payment.update({
-    status: "COMPLETED",
-    ...data
-  }, { where: { id }, transaction });
+  return await Payment.update(
+    {
+      status: "COMPLETED",
+      ...data,
+    },
+    { where: { id }, transaction },
+  );
 };
 
 exports.failPayment = async (id, transaction = null) => {
-  return await Payment.update({
-    status: "FAILED"
-  }, { where: { id }, transaction });
+  return await Payment.update(
+    {
+      status: "FAILED",
+    },
+    { where: { id }, transaction },
+  );
 };
 
 exports.updateOrderStatus = async (orderId, status, transaction = null) => {
-  return await Order.update({ status }, {
-    where: { id: orderId },
-    transaction,
-  });
+  return await Order.update(
+    { status },
+    {
+      where: { id: orderId },
+      transaction,
+    },
+  );
 };
 
 exports.findOrderById = async (orderId) => {
@@ -53,7 +67,7 @@ exports.clearActiveCartByUserId = async (userId, transaction = null) => {
   const { Cart } = require("../cart/cart.model");
   return await Cart.update(
     { status: "ORDERED" },
-    { where: { user_id: userId, status: "ACTIVE" }, transaction }
+    { where: { user_id: userId, status: "ACTIVE" }, transaction },
   );
 };
 
@@ -64,6 +78,6 @@ exports.getAvailablePaymentMethods = async () => {
     { code: PaymentMethod.MOBILE_WALLET, name: "Mobile Wallet", enabled: true },
     { code: PaymentMethod.FAWRY, name: "Fawry", enabled: true },
   ];
-  
+
   return methods.filter((m) => m.enabled);
 };
