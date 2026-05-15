@@ -7,6 +7,7 @@ const addressesRepository = require("../addresses/addresses.repository");
 const shippingStatus = require("../../enums/shippingStatus.enum");
 const PaymentStatus = require("../../enums/paymentStatus.enum");
 const paymobService = require("../../services/paymob/paymob.service");
+const PaymentMethod = require("../../enums/paymentMethod.enum");
 
 exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
   const address = await addressesRepository.findByIdAndUser(addressId, userId);
@@ -70,45 +71,85 @@ exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
         status: shippingStatus.PENDING,
       },
     };
-    const order = await ordersRepository.processCheckout(cart.id, orderData, true);
+    const order = await ordersRepository.processCheckout(
+      cart.id,
+      orderData,
+      true,
+    );
     return { order };
   }
 
   const token = await paymobService.authenticate();
-  
+
   const amountCents = Math.round(total * 100);
-  const paymobItems = itemsData.map(item => ({
+  const paymobItems = itemsData.map((item) => ({
     name: `Product ${item.product_id}`,
     amount_cents: Math.round(item.price * 100),
     description: "E-commerce Item",
-    quantity: item.quantity
+    quantity: item.quantity,
   }));
 
   const merchantOrderId = `CART_${cart.id}_ADDR_${addressId}_${Date.now()}`;
-  const paymobOrder = await paymobService.createOrder(token, amountCents, merchantOrderId, paymobItems);
+  const paymobOrder = await paymobService.createOrder(
+    token,
+    amountCents,
+    merchantOrderId,
+    paymobItems,
+  );
 
   const billingData = {
-    first_name: "Customer", last_name: "Customer", email: "customer@example.com",
+    first_name: "Customer",
+    last_name: "Customer",
+    email: "customer@example.com",
     phone_number: walletPhone || "01000000000",
-    apartment: "NA", floor: "NA", street: "NA", building: "NA", city: "NA", country: "EG"
+    apartment: "NA",
+    floor: "NA",
+    street: "NA",
+    building: "NA",
+    city: "NA",
+    country: "EG",
   };
 
-  if (paymentMethod === "VISA") {
-    const paymentKey = await paymobService.createPaymentKey(token, paymobOrder.id, amountCents, paymobService.cardIntegrationId, billingData);
-    const paymentUrl = paymobService.generateIframeUrl(paymentKey);
-    return { payment_url: paymentUrl };
-  } else if (paymentMethod === "MOBILE_WALLET") {
-    if (!paymobService.walletIntegrationId) throw new ApiError("Mobile wallet integration not configured", HttpStatus.INTERNAL_SERVER_ERROR);
-    if (!walletPhone) throw new ApiError("Wallet phone is required for MOBILE_WALLET", HttpStatus.BAD_REQUEST);
-    const paymentKey = await paymobService.createPaymentKey(token, paymobOrder.id, amountCents, paymobService.walletIntegrationId, billingData);
-    const walletResponse = await paymobService.generateWalletUrl(paymentKey, walletPhone);
-    return { redirect_url: walletResponse.redirect_url };
-  } else if (paymentMethod === "FAWRY") {
-    if (!paymobService.fawryIntegrationId) throw new ApiError("Fawry integration not configured", HttpStatus.INTERNAL_SERVER_ERROR);
-    const paymentKey = await paymobService.createPaymentKey(token, paymobOrder.id, amountCents, paymobService.fawryIntegrationId, billingData);
-    const fawryResponse = await paymobService.generateFawryReference(paymentKey);
-    const reference_number = fawryResponse.payment_data?.fawry_reference || fawryResponse.id; 
-    return { reference_number };
+  switch (paymentMethod) {
+    case PaymentMethod.VISA:
+      const paymentKey = await paymobService.createPaymentKey(
+        token,
+        paymobOrder.id,
+        amountCents,
+        paymobService.cardIntegrationId,
+        billingData,
+      );
+      const paymentUrl = paymobService.generateIframeUrl(paymentKey);
+      return { payment_url: paymentUrl };
+    case PaymentMethod.MOBILE_WALLET:
+      if (!paymobService.walletIntegrationId)
+        throw new ApiError(
+          "Mobile wallet integration not configured",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      if (!walletPhone)
+        throw new ApiError(
+          "Wallet phone is required for MOBILE_WALLET",
+          HttpStatus.BAD_REQUEST,
+        );
+      const walletPaymentKey = await paymobService.createPaymentKey(
+        token,
+        paymobOrder.id,
+        amountCents,
+        paymobService.walletIntegrationId,
+        billingData,
+      );
+      const walletResponse = await paymobService.generateWalletUrl(
+        walletPaymentKey,
+        walletPhone,
+      );
+      if (!walletResponse.redirect_url)
+        throw new ApiError(
+          "Failed to generate wallet URL, check wallet phone number or try another payment method",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+
+      return { redirect_url: walletResponse.redirect_url };
   }
 };
 

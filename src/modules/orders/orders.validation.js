@@ -10,7 +10,12 @@ exports.checkoutSchema = z.object({
         Object.values(PaymentMethod),
         `Expected payment_method to be one of ${Object.values(PaymentMethod).join(", ")}`,
       ),
-      wallet_phone: z.string().optional(),
+      wallet_phone: z
+        .string()
+        .optional()
+        .refine((val) => /^01[0125][0-9]{8}$/.test(val), {
+          message: "Invalid wallet phone number format expected 01XXXXXXXXX",
+        }),
     })
     .strict(),
 });

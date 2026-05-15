@@ -9,7 +9,7 @@ class PaymobService {
 
     this.cardIntegrationId = process.env.PAYMOB_CARD_INTEGRATION_ID;
     this.walletIntegrationId = process.env.PAYMOB_WALLET_INTEGRATION_ID;
-    this.fawryIntegrationId = process.env.PAYMOB_FAWRY_INTEGRATION_ID;
+    this.paypalIntegrationId = process.env.PAYMOB_PAYPAL_INTEGRATION_ID;
     this.iframeId = process.env.PAYMOB_IFRAME_ID;
   }
 
@@ -72,20 +72,6 @@ class PaymobService {
     return response.data;
   }
 
-  async generateFawryReference(paymentKey) {
-    const response = await axios.post(
-      `${this.baseUrl}/acceptance/payments/pay`,
-      {
-        source: {
-          identifier: "Fawry",
-          subtype: "Fawry",
-        },
-        payment_token: paymentKey,
-      },
-    );
-    return response.data;
-  }
-
   verifyWebhookHmac(queryData, hmac) {
     const obj = queryData.obj || {};
     const sourceData = obj.source_data || {};
@@ -123,15 +109,10 @@ class PaymobService {
       })
       .join("");
 
-    console.log("lexographicalString:", lexographicalString);
-
     const calculatedHmac = crypto
       .createHmac("sha512", this.hmacSecret)
       .update(lexographicalString)
       .digest("hex");
-
-    console.log("generated:", calculatedHmac);
-    console.log("received :", hmac);
 
     return calculatedHmac === hmac;
   }

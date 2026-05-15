@@ -8,8 +8,6 @@ module.exports = {
       MODIFY COLUMN method ENUM(
         'COD',
         'VISA',
-        'FAWRY',
-        'PAYPAL',
         'MOBILE_WALLET'
       ) NOT NULL;
     `);
@@ -21,8 +19,7 @@ module.exports = {
       MODIFY COLUMN method ENUM(
         'COD',
         'VISA',
-        'FAWRY',
-        'PAYPAL'
+        'MOBILE_WALLET'
       ) NOT NULL;
     `);
   },
