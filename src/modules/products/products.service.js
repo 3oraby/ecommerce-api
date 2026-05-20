@@ -11,6 +11,9 @@ const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const {
   invalidateProductCaches,
 } = require("../../services/cache/cacheInvalidation.helper");
+const centralNotificationService = require("../../services/notifications/notification.service");
+const NotificationTypes = require("../../enums/notificationTypes.enum");
+const favoritesRepository = require("../favorites/favorites.repository");
 
 const buildProductQuery = (query, options = {}) => {
   const filterParams = { ...query };
@@ -190,11 +193,50 @@ exports.updateProduct = async (id, data) => {
   const productData = { ...data };
   delete productData.categories;
 
+  const oldProduct = await productsRepository.findById(id);
+
   const product = await productsRepository.updateProductWithCategories(
     id,
     productData,
     categories,
   );
+
+  if (oldProduct) {
+    let notifyBackInStock = false;
+    let notifyPriceDrop = false;
+
+    if (oldProduct.stock === 0 && product.stock > 0) {
+      notifyBackInStock = true;
+    }
+
+    if (product.price < oldProduct.price) {
+      notifyPriceDrop = true;
+    }
+
+    if (notifyBackInStock || notifyPriceDrop) {
+      const userIds = await favoritesRepository.getUsersWhoFavoritedProduct(id);
+      
+      if (userIds.length > 0) {
+        if (notifyBackInStock) {
+          await centralNotificationService.sendBulkNotifications(userIds, {
+            title: "Product Back in Stock!",
+            body: `${product.name} is back in stock. Grab it before it's gone!`,
+            type: NotificationTypes.PRODUCT_BACK_IN_STOCK,
+            data: { productId: id },
+          });
+        }
+        
+        if (notifyPriceDrop) {
+          await centralNotificationService.sendBulkNotifications(userIds, {
+            title: "Price Drop Alert!",
+            body: `Great news! ${product.name} is now cheaper.`,
+            type: NotificationTypes.PRICE_DROP,
+            data: { productId: id, newPrice: product.price },
+          });
+        }
+      }
+    }
+  }
 
   await invalidateProductCaches({ productId: id });
 

@@ -1,5 +1,7 @@
 const notificationRepository = require("./notification.repository");
-const notificationProvider = require("../../services/notifications/notification.provider");
+const centralNotificationService = require("../../services/notifications/notification.service");
+const ApiError = require("../../utils/apiError");
+const HttpStatus = require("../../enums/httpStatus.enum");
 
 exports.saveFcmToken = async (userId, fcmToken) => {
   const existingToken = await notificationRepository.findToken(fcmToken);
@@ -14,27 +16,40 @@ exports.saveFcmToken = async (userId, fcmToken) => {
   return await notificationRepository.createToken(userId, fcmToken);
 };
 
-exports.sendPushNotification = async ({ userId, title, body, data = {} }) => {
-  try {
-    const userTokens = await notificationRepository.getUserTokens(userId);
+exports.sendPushNotification = async (payload) => {
+  return await centralNotificationService.sendNotification(payload.userId, payload);
+};
 
-    if (!userTokens || userTokens.length === 0) {
-      return null;
-    }
+exports.getNotifications = async (userId, page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+  const { count, rows } = await notificationRepository.getNotifications(userId, limit, offset);
 
-    const tokens = userTokens.map((t) => t.fcm_token);
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    totalItemsInCurrentPage: rows.length,
+    notifications: rows,
+  };
+};
 
-    const payload = { title, body, data };
-    const response = await notificationProvider.sendPushNotification(tokens, payload);
-
-    if (response && response.failedTokens && response.failedTokens.length > 0) {
-      await notificationRepository.removeTokens(response.failedTokens);
-      console.log(`Cleaned up ${response.failedTokens.length} invalid tokens for user ${userId}`);
-    }
-
-    return response;
-  } catch (error) {
-    console.error(`Failed to send push notification to user ${userId}:`, error.message);
-    return null;
+exports.markAsRead = async (notificationId, userId) => {
+  const notification = await notificationRepository.getNotificationById(notificationId, userId);
+  if (!notification) {
+    throw new ApiError("Notification not found", HttpStatus.NotFound);
   }
+
+  if (notification.is_read) {
+    throw new ApiError("Notification is already read", HttpStatus.BadRequest);
+  }
+
+  return await notificationRepository.markAsRead(notificationId, userId);
+};
+
+exports.markAllAsRead = async (userId) => {
+  return await notificationRepository.markAllAsRead(userId);
+};
+
+exports.getUnreadCount = async (userId) => {
+  return await notificationRepository.getUnreadCount(userId);
 };

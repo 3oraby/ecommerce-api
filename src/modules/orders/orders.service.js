@@ -8,6 +8,8 @@ const shippingStatus = require("../../enums/shippingStatus.enum");
 const PaymentStatus = require("../../enums/paymentStatus.enum");
 const paymobService = require("../../services/paymob/paymob.service");
 const PaymentMethod = require("../../enums/paymentMethod.enum");
+const centralNotificationService = require("../../services/notifications/notification.service");
+const NotificationTypes = require("../../enums/notificationTypes.enum");
 
 exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
   const address = await addressesRepository.findByIdAndUser(addressId, userId);
@@ -76,6 +78,27 @@ exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
       orderData,
       true,
     );
+
+    await centralNotificationService.sendNotification(userId, {
+      title: "Order Created",
+      body: `Your COD order #${order.id} has been created successfully.`,
+      type: NotificationTypes.ORDER_CREATED,
+      data: { orderId: order.id },
+    });
+    
+    // Notify sellers
+    const sellerIds = [...new Set(cart.items.map(item => item.product.seller_id))];
+    for (const sellerId of sellerIds) {
+      if (sellerId) {
+        await centralNotificationService.sendNotification(sellerId, {
+          title: "New Order Received",
+          body: `You have a new order (Order #${order.id}) containing your products.`,
+          type: NotificationTypes.NEW_ORDER,
+          data: { orderId: order.id },
+        });
+      }
+    }
+
     return { order };
   }
 
@@ -175,6 +198,14 @@ exports.cancelOrder = async (userId, orderId) => {
   }
 
   await ordersRepository.cancelOrder(orderId);
+  
+  await centralNotificationService.sendNotification(userId, {
+    title: "Order Canceled",
+    body: `Your order #${order.id} has been canceled.`,
+    type: NotificationTypes.ORDER_CANCELED,
+    data: { orderId: order.id },
+  });
+  
   return { success: true };
 };
 
@@ -215,6 +246,22 @@ exports.updateOrderStatusAdmin = async (orderId, newStatus) => {
   }
 
   await ordersRepository.updateOrderStatus(orderId, newStatus);
+  
+  if (newStatus === OrderStatus.SHIPPED) {
+    await centralNotificationService.sendNotification(order.user_id, {
+      title: "Order Shipped",
+      body: `Your order #${order.id} is now on its way!`,
+      type: NotificationTypes.ORDER_SHIPPED,
+      data: { orderId: order.id },
+    });
+  } else if (newStatus === OrderStatus.DELIVERED) {
+    await centralNotificationService.sendNotification(order.user_id, {
+      title: "Order Delivered",
+      body: `Your order #${order.id} has been delivered successfully.`,
+      type: NotificationTypes.ORDER_DELIVERED,
+      data: { orderId: order.id },
+    });
+  }
 };
 
 exports.getSellerOrders = async (sellerId, filters) => {

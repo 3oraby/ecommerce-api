@@ -23,4 +23,9 @@ router.post(
   notificationController.testNotification
 );
 
+router.get("/", notificationController.getNotifications);
+router.get("/unread-count", notificationController.getUnreadCount);
+router.patch("/read-all", notificationController.markAllAsRead);
+router.patch("/:id/read", notificationController.markAsRead);
+
 module.exports = router;

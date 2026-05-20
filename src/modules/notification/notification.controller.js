@@ -2,6 +2,7 @@ const asyncHandler = require("../../utils/asyncHandler");
 const sendResponse = require("../../utils/sendResponse");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const notificationService = require("./notification.service");
+const notificationTypes = require("../../enums/notificationTypes.enum");
 
 exports.saveFcmToken = asyncHandler(async (req, res, next) => {
   const { fcmToken } = req.body;
@@ -23,6 +24,7 @@ exports.testNotification = asyncHandler(async (req, res, next) => {
     userId,
     title: "Test Notification",
     body: "Firebase notification system is working successfully.",
+    type: notificationTypes.TEST,
     data: { test: "true" }
   });
 
@@ -42,5 +44,57 @@ exports.testNotification = asyncHandler(async (req, res, next) => {
       successCount: response.successCount,
       failureCount: response.failureCount,
     }
+  });
+});
+
+exports.getNotifications = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+
+  const data = await notificationService.getNotifications(userId, page, limit);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Notifications fetched successfully",
+    data,
+  });
+});
+
+exports.markAsRead = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const { id } = req.params;
+
+  await notificationService.markAsRead(id, userId);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Notification marked as read",
+  });
+});
+
+exports.markAllAsRead = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+
+  await notificationService.markAllAsRead(userId);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "All notifications marked as read",
+  });
+});
+
+exports.getUnreadCount = asyncHandler(async (req, res, next) => {
+  const userId = req.user.id;
+  const count = await notificationService.getUnreadCount(userId);
+
+  sendResponse({
+    res,
+    statusCode: HttpStatus.OK,
+    message: "Unread count fetched successfully",
+    data: { count },
   });
 });

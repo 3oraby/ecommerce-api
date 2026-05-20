@@ -2,12 +2,14 @@ const paymentsRepository = require("./payments.repository");
 const paymobService = require("../../services/paymob/paymob.service");
 const PaymentStatus = require("../../enums/paymentStatus.enum");
 const OrderStatus = require("../../enums/orderStatus.enum");
-const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const { cacheOrFetch } = require("../../services/cache/cache.helper");
 const cartRepository = require("../cart/cart.repository");
 const ordersRepository = require("../orders/orders.repository");
+const centralNotificationService = require("../../services/notifications/notification.service");
+const NotificationTypes = require("../../enums/notificationTypes.enum");
+const ApiError = require("../../utils/apiError");
 
 exports.handleWebhook = async (queryData, hmac) => {
   try {
@@ -38,10 +40,6 @@ exports.handleWebhook = async (queryData, hmac) => {
       return { success: true, message: "Webhook already processed" };
     }
 
-    if (!success || pending) {
-      return { success: true, message: "Payment failed/pending" };
-    }
-
     if (!merchantOrderId || !merchantOrderId.startsWith("CART_")) {
       console.warn(
         "Invalid or missing merchant_order_id format",
@@ -69,6 +67,20 @@ exports.handleWebhook = async (queryData, hmac) => {
     if (!cart || !cart.items || cart.items.length === 0) {
       console.warn("Cart is empty or not active, ignoring webhook");
       return { success: true, message: "Cart already processed or invalid" };
+    }
+
+    const userId = cart.user_id;
+
+    if (!success || pending) {
+      if (!pending) {
+        await centralNotificationService.sendNotification(userId, {
+          title: "Payment Failed",
+          body: `Your payment for cart #${cartId} failed. Please try again.`,
+          type: NotificationTypes.PAYMENT_FAILED,
+          data: { cartId, transactionId },
+        });
+      }
+      return { success: true, message: "Payment failed/pending" };
     }
 
     let total = 0;
@@ -109,6 +121,34 @@ exports.handleWebhook = async (queryData, hmac) => {
     };
 
     await ordersRepository.processCheckout(cartId, orderData, true);
+
+    await centralNotificationService.sendNotification(userId, {
+      title: "Payment Successful",
+      body: `Your payment was successful and your order has been created.`,
+      type: NotificationTypes.PAYMENT_SUCCESS,
+      data: { cartId, transactionId },
+    });
+    
+    // Also trigger ORDER_CREATED notification since payment created the order
+    await centralNotificationService.sendNotification(userId, {
+      title: "Order Created",
+      body: `Your paid order has been created successfully.`,
+      type: NotificationTypes.ORDER_CREATED,
+      data: { cartId },
+    });
+
+    // Notify sellers
+    const sellerIds = [...new Set(cart.items.map(item => item.product.seller_id))];
+    for (const sellerId of sellerIds) {
+      if (sellerId) {
+        await centralNotificationService.sendNotification(sellerId, {
+          title: "New Order Received",
+          body: `You have a new paid order containing your products.`,
+          type: NotificationTypes.NEW_ORDER,
+          data: { cartId },
+        });
+      }
+    }
 
     return {
       success: true,

@@ -50,3 +50,11 @@ exports.deleteFavorite = async (userId, productId) => {
   await favorite.destroy();
   return true;
 };
+
+exports.getUsersWhoFavoritedProduct = async (productId) => {
+  const favorites = await Favorite.findAll({
+    where: { product_id: productId },
+    attributes: ["user_id"],
+  });
+  return favorites.map((f) => f.user_id);
+};
