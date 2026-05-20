@@ -1,5 +1,5 @@
 const notificationRepository = require("./notification.repository");
-const firebaseProvider = require("./providers/firebase.provider");
+const notificationProvider = require("../../services/notifications/notification.provider");
 
 exports.saveFcmToken = async (userId, fcmToken) => {
   const existingToken = await notificationRepository.findToken(fcmToken);
@@ -24,26 +24,12 @@ exports.sendPushNotification = async ({ userId, title, body, data = {} }) => {
 
     const tokens = userTokens.map((t) => t.fcm_token);
 
-    const response = await firebaseProvider.sendPushNotification(tokens, { title, body }, data);
+    const payload = { title, body, data };
+    const response = await notificationProvider.sendPushNotification(tokens, payload);
 
-    if (response && response.responses) {
-      const failedTokens = [];
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          const error = resp.error;
-          if (
-            error.code === 'messaging/invalid-registration-token' ||
-            error.code === 'messaging/registration-token-not-registered'
-          ) {
-            failedTokens.push(tokens[idx]);
-          }
-        }
-      });
-
-      if (failedTokens.length > 0) {
-        await notificationRepository.removeTokens(failedTokens);
-        console.log(`Cleaned up ${failedTokens.length} invalid Firebase tokens for user ${userId}`);
-      }
+    if (response && response.failedTokens && response.failedTokens.length > 0) {
+      await notificationRepository.removeTokens(response.failedTokens);
+      console.log(`Cleaned up ${response.failedTokens.length} invalid tokens for user ${userId}`);
     }
 
     return response;

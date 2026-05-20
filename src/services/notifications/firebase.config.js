@@ -2,7 +2,7 @@ const admin = require("firebase-admin");
 const path = require("path");
 const fs = require("fs");
 
-class FirebaseProvider {
+class FirebaseConfig {
   constructor() {
     this.messaging = null;
     this.initialize();
@@ -21,7 +21,7 @@ class FirebaseProvider {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
         credential = admin.credential.cert(serviceAccount);
       } else {
-        const serviceAccountPath = path.resolve(process.cwd(), "firebase-service-account.json");
+        const serviceAccountPath = path.resolve(process.cwd(), process.env.FIREBASE_SERVICE_ACCOUNT_PATH || "src/config/firebase-service-account.json");
         if (fs.existsSync(serviceAccountPath)) {
           credential = admin.credential.cert(require(serviceAccountPath));
         } else {
@@ -41,32 +41,9 @@ class FirebaseProvider {
     }
   }
 
-  async sendPushNotification(tokens, notification, data = {}) {
-    if (!this.messaging) {
-      throw new Error("Firebase messaging not initialized");
-    }
-
-    if (!tokens || tokens.length === 0) {
-      return null;
-    }
-
-    const message = {
-      notification,
-      data: this._stringifyData(data),
-      tokens,
-    };
-
-    return await this.messaging.sendEachForMulticast(message);
-  }
-
-  // FCM data payload strictly requires string values
-  _stringifyData(data) {
-    const stringified = {};
-    for (const key in data) {
-      stringified[key] = String(data[key]);
-    }
-    return stringified;
+  getMessaging() {
+    return this.messaging;
   }
 }
 
-module.exports = new FirebaseProvider();
+module.exports = new FirebaseConfig();

@@ -30,3 +30,7 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+
+# Firebase
+src/config/firebase-service-account.json
