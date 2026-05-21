@@ -80,7 +80,8 @@ exports.updateMeSchema = z.object({
         )
         .optional(),
     })
-    .strict(),
+    .strict()
+    .optional(),
 });
 
 exports.userIdParamsSchema = z.object({
