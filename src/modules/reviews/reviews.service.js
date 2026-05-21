@@ -3,6 +3,10 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const Roles = require("../../enums/roles.enum");
 const { formatPaginatedResponse } = require("../../utils/pagination.util");
+const { normalizeQuery } = require("../../utils/query.util");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheOrFetch } = require("../../services/cache/cache.helper");
+const { invalidateReviewsCache } = require("../../services/cache/cacheInvalidation.helper");
 
 exports.getProductReviews = async (productId, features) => {
   const product = await reviewsRepository.findProductById(productId);
@@ -10,20 +14,26 @@ exports.getProductReviews = async (productId, features) => {
     throw new ApiError("Product not found", HttpStatus.NotFound);
   }
 
-  const result = await reviewsRepository.findProductReviews(productId, features);
+  const normalized = features.normalize();
+  const normQuery = normalizeQuery(normalized);
+  const cacheKey = cacheKeyBuilder.reviewsProduct(productId, normQuery);
 
-  const page = features?.parsedPagination?.page || 1;
-  const limit = features?.parsedPagination?.limit || 10;
+  return cacheOrFetch(cacheKey, async () => {
+    const result = await reviewsRepository.findProductReviews(productId, features);
 
-  const formatted = formatPaginatedResponse({
-    totalItems: result.count,
-    page,
-    limit,
-    data: result.rows,
+    const page = features?.parsedPagination?.page || 1;
+    const limit = features?.parsedPagination?.limit || 10;
+
+    const formatted = formatPaginatedResponse({
+      totalItems: result.count,
+      page,
+      limit,
+      data: result.rows,
+    });
+
+    formatted.averageRating = result.averageRating;
+    return formatted;
   });
-
-  formatted.averageRating = result.averageRating;
-  return formatted;
 };
 
 exports.createReview = async (userId, productId, rating, review) => {
@@ -56,12 +66,16 @@ exports.createReview = async (userId, productId, rating, review) => {
     );
   }
 
-  return await reviewsRepository.createReview({
+  const newReview = await reviewsRepository.createReview({
     user_id: userId,
     product_id: productId,
     rating,
     review,
   });
+
+  await invalidateReviewsCache(userId, productId);
+
+  return newReview;
 };
 
 exports.updateReview = async (userId, productId, data) => {
@@ -75,6 +89,8 @@ exports.updateReview = async (userId, productId, data) => {
   }
 
   await reviewsRepository.updateReview(userId, productId, data);
+
+  await invalidateReviewsCache(userId, productId);
 
   return { success: true };
 };
@@ -97,6 +113,8 @@ exports.deleteReview = async (userId, role, productId) => {
   }
 
   await reviewsRepository.deleteReview(userId, productId);
+
+  await invalidateReviewsCache(userId, productId);
 
   return { success: true };
 };

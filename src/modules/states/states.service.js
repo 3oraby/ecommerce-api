@@ -2,6 +2,8 @@ const statesRepository = require("./states.repository");
 const countriesRepository = require("../countries/countries.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheOrFetch } = require("../../services/cache/cache.helper");
 
 const normalizeName = (name) => {
   if (!name) return name;
@@ -41,7 +43,8 @@ exports.createStateService = async (req) => {
 };
 
 exports.getStatesService = async () => {
-  return await statesRepository.getStates();
+  const cacheKey = cacheKeyBuilder.states();
+  return cacheOrFetch(cacheKey, () => statesRepository.getStates());
 };
 
 exports.getStatesByCountryService = async (req) => {

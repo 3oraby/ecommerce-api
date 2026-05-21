@@ -4,6 +4,9 @@ const statesRepository = require("../states/states.repository");
 const citiesRepository = require("../cities/cities.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheOrFetch } = require("../../services/cache/cache.helper");
+const { invalidateAddressesCache } = require("../../services/cache/cacheInvalidation.helper");
 
 const checkAddressRelations = async (data) => {
   const country = await countriesRepository.findCountryById(data.country_id);
@@ -63,7 +66,7 @@ exports.createAddressService = async (userId, data) => {
 
   const shouldReset = isDefault && addressCount > 0;
 
-  return await addressesRepository.createAddress(
+  const newAddress = await addressesRepository.createAddress(
     {
       ...data,
       user_id: userId,
@@ -71,10 +74,15 @@ exports.createAddressService = async (userId, data) => {
     },
     shouldReset,
   );
+
+  await invalidateAddressesCache(userId);
+
+  return newAddress;
 };
 
 exports.getUserAddressesService = async (userId) => {
-  return await addressesRepository.getUserAddresses(userId);
+  const cacheKey = cacheKeyBuilder.addresses(userId);
+  return cacheOrFetch(cacheKey, () => addressesRepository.getUserAddresses(userId));
 };
 
 exports.getAddressByIdService = async (id, userId) => {
@@ -94,20 +102,28 @@ exports.updateAddressService = async (id, userId, data) => {
     city_id: finalCityId,
   });
 
-  return await addressesRepository.updateAddress(id, data);
+  const updatedAddress = await addressesRepository.updateAddress(id, data);
+
+  await invalidateAddressesCache(userId);
+
+  return updatedAddress;
 };
 
 exports.deleteAddressService = async (id, userId) => {
   const address = await getAndValidateAddressOwnership(id, userId);
 
   if (!address.is_default) {
-    return await addressesRepository.deleteAddress(id);
+    const result = await addressesRepository.deleteAddress(id);
+    await invalidateAddressesCache(userId);
+    return result;
   }
 
   const allAddresses = await addressesRepository.getUserAddresses(userId);
 
   if (allAddresses.length <= 1) {
-    return await addressesRepository.deleteAddress(id);
+    const result = await addressesRepository.deleteAddress(id);
+    await invalidateAddressesCache(userId);
+    return result;
   }
 
   const currentIndex = allAddresses.findIndex((a) => a.id === Number(id));
@@ -120,7 +136,11 @@ exports.deleteAddressService = async (id, userId) => {
       allAddresses[0].id === Number(id) ? allAddresses[1] : allAddresses[0];
   }
 
-  return await addressesRepository.deleteAddress(id, nextAddress.id);
+  const result = await addressesRepository.deleteAddress(id, nextAddress.id);
+  
+  await invalidateAddressesCache(userId);
+  
+  return result;
 };
 
 exports.setDefaultAddressService = async (id, userId) => {
@@ -130,5 +150,9 @@ exports.setDefaultAddressService = async (id, userId) => {
     throw new ApiError("Address is already the default", HttpStatus.BadRequest);
   }
 
-  return await addressesRepository.setDefaultAddress(id, userId);
+  const result = await addressesRepository.setDefaultAddress(id, userId);
+
+  await invalidateAddressesCache(userId);
+
+  return result;
 };

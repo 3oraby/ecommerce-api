@@ -4,7 +4,10 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 
 const ApiFeatures = require("../../utils/apiFeatures");
-const { formatPaginatedResponse } = require("../../utils/pagination.util");
+const { normalizeQuery } = require("../../utils/query.util");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheableList } = require("../../services/cache/cache.helper");
+const { invalidateFavoritesCache } = require("../../services/cache/cacheInvalidation.helper");
 
 exports.getMyFavorites = async (userId, query) => {
   const features = new ApiFeatures({}, query).filter().sort().paginate();
@@ -14,21 +17,27 @@ exports.getMyFavorites = async (userId, query) => {
   const order = [["added_at", "DESC"]];
   const page = Number(query.page) || 1;
 
-  const result = await favoritesRepository.findUserFavorites(
-    userId,
-    limit,
-    offset,
-    order,
-  );
+  const normalized = features.normalize();
+  const normQuery = normalizeQuery(normalized);
+  
+  const cacheKey = cacheKeyBuilder.favorites(userId, normQuery);
 
-  return formatPaginatedResponse({
-    totalItems: result.count,
-    page,
-    limit,
-    data: result.rows.map((favorite) => ({
-      added_at: favorite.added_at,
-      product: favorite.Product,
-    })),
+  return cacheableList({
+    cacheKey,
+    repositoryCall: async () => {
+      const result = await favoritesRepository.findUserFavorites(
+        userId,
+        limit,
+        offset,
+        order,
+      );
+      result.rows = result.rows.map((favorite) => ({
+        added_at: favorite.added_at,
+        product: favorite.Product,
+      }));
+      return result;
+    },
+    queryBuilderResult: normalized
   });
 };
 
@@ -50,6 +59,7 @@ exports.addToFavorites = async (userId, productId) => {
   }
 
   await favoritesRepository.createFavorite(userId, productId);
+  await invalidateFavoritesCache(userId);
 
   return { success: true };
 };
@@ -67,6 +77,8 @@ exports.removeFromFavorites = async (userId, productId) => {
       HttpStatus.NotFound,
     );
   }
+
+  await invalidateFavoritesCache(userId);
 
   return { success: true };
 };

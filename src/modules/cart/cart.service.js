@@ -3,26 +3,33 @@ const productsRepository = require("../products/products.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const CartStatus = require("../../enums/cartStatus.enum");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheOrFetch } = require("../../services/cache/cache.helper");
+const { invalidateCartCache } = require("../../services/cache/cacheInvalidation.helper");
 
 exports.getCart = async (userId) => {
-  const cart = await cartRepository.getCartWithItems(userId);
+  const cacheKey = cacheKeyBuilder.cart(userId);
 
-  if (!cart) {
+  return cacheOrFetch(cacheKey, async () => {
+    const cart = await cartRepository.getCartWithItems(userId);
+
+    if (!cart) {
+      return {
+        status: CartStatus.ACTIVE,
+        items: [],
+      };
+    }
+
     return {
-      status: CartStatus.ACTIVE,
-      items: [],
+      cartId: cart.id,
+      status: cart.status,
+      items: cart.items.map((item) => ({
+        quantity: item.quantity,
+        added_at: item.added_at,
+        product: item.product,
+      })),
     };
-  }
-
-  return {
-    cartId: cart.id,
-    status: cart.status,
-    items: cart.items.map((item) => ({
-      quantity: item.quantity,
-      added_at: item.added_at,
-      product: item.product,
-    })),
-  };
+  });
 };
 exports.addToCart = async (userId, productId, quantity = 1) => {
   const product = await productsRepository.findById(productId);
@@ -54,6 +61,8 @@ exports.addToCart = async (userId, productId, quantity = 1) => {
   } else {
     await cartRepository.addCartItem(cart.id, productId, quantity);
   }
+
+  await invalidateCartCache(userId);
 };
 
 exports.updateCartItem = async (userId, productId, quantity) => {
@@ -72,6 +81,8 @@ exports.updateCartItem = async (userId, productId, quantity) => {
   } else {
     await cartRepository.updateCartItem(cart.id, productId, quantity);
   }
+
+  await invalidateCartCache(userId);
 };
 
 exports.deleteFromCart = async (userId, productId) => {
@@ -86,4 +97,5 @@ exports.deleteFromCart = async (userId, productId) => {
   }
 
   await cartRepository.deleteCartItem(cart.id, productId);
+  await invalidateCartCache(userId);
 };

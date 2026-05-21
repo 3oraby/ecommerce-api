@@ -37,8 +37,4 @@ const SellerProfile = sequelize.define(
   }
 );
 
-// We would normally define associations here or in an index file
-// User.hasOne(SellerProfile, { foreignKey: "user_id" })
-// SellerProfile.belongsTo(User, { foreignKey: "user_id" })
-
 module.exports = SellerProfile;

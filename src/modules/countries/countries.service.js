@@ -1,6 +1,8 @@
 const countryRepository = require("./countries.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheOrFetch } = require("../../services/cache/cache.helper");
 
 const normalizeName = (name) => {
   if (!name) return name;
@@ -30,7 +32,8 @@ exports.createCountryService = async (req) => {
 };
 
 exports.getAllCountriesService = async () => {
-  return await countryRepository.getAllCountries();
+  const cacheKey = cacheKeyBuilder.countries();
+  return cacheOrFetch(cacheKey, () => countryRepository.getAllCountries());
 };
 
 exports.getCountryByIdService = async (req) => {

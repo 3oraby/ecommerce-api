@@ -11,6 +11,10 @@ const PaymentMethod = require("../../enums/paymentMethod.enum");
 const centralNotificationService = require("../../services/notifications/notification.service");
 const NotificationTypes = require("../../enums/notificationTypes.enum");
 const { formatPaginatedResponse } = require("../../utils/pagination.util");
+const { normalizeQuery } = require("../../utils/query.util");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheableList } = require("../../services/cache/cache.helper");
+const { invalidateOrdersCache } = require("../../services/cache/cacheInvalidation.helper");
 
 exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
   const address = await addressesRepository.findByIdAndUser(addressId, userId);
@@ -99,6 +103,8 @@ exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
         });
       }
     }
+
+    await invalidateOrdersCache(userId);
 
     return { order };
   }
@@ -207,18 +213,20 @@ exports.cancelOrder = async (userId, orderId) => {
     data: { orderId: order.id },
   });
   
+  await invalidateOrdersCache(userId);
+  
   return { success: true };
 };
 
 exports.getMyOrders = async (userId, filters) => {
-  const result = await ordersRepository.findUserOrders(userId, filters);
-  const page = filters?.parsedPagination?.page || 1;
-  const limit = filters?.parsedPagination?.limit || 10;
-  return formatPaginatedResponse({
-    totalItems: result.count,
-    page,
-    limit,
-    data: result.rows,
+  const normalized = filters.normalize();
+  const normQuery = normalizeQuery(normalized);
+  const cacheKey = cacheKeyBuilder.orders(userId, normQuery);
+
+  return cacheableList({
+    cacheKey,
+    repositoryCall: () => ordersRepository.findUserOrders(userId, filters),
+    queryBuilderResult: normalized,
   });
 };
 
@@ -227,14 +235,15 @@ exports.getMyCanceledOrders = async (userId, filters) => {
     ...filters.parsedFilters,
     status: OrderStatus.CANCELED,
   };
-  const result = await ordersRepository.findUserOrders(userId, filters);
-  const page = filters?.parsedPagination?.page || 1;
-  const limit = filters?.parsedPagination?.limit || 10;
-  return formatPaginatedResponse({
-    totalItems: result.count,
-    page,
-    limit,
-    data: result.rows,
+  
+  const normalized = filters.normalize();
+  const normQuery = normalizeQuery(normalized);
+  const cacheKey = cacheKeyBuilder.orders(userId, normQuery);
+
+  return cacheableList({
+    cacheKey,
+    repositoryCall: () => ordersRepository.findUserOrders(userId, filters),
+    queryBuilderResult: normalized,
   });
 };
 
@@ -279,18 +288,19 @@ exports.updateOrderStatusAdmin = async (orderId, newStatus) => {
       data: { orderId: order.id },
     });
   }
+
+  await invalidateOrdersCache(order.user_id);
 };
 
 exports.getSellerOrders = async (sellerId, filters) => {
-  const result = await ordersRepository.findSellerOrders(sellerId, filters);
-  const page = filters?.parsedPagination?.page || 1;
-  const limit = filters?.parsedPagination?.limit || 10;
+  const normalized = filters.normalize();
+  const normQuery = normalizeQuery(normalized);
+  const cacheKey = cacheKeyBuilder.orders(sellerId, { ...normQuery, role: "seller" });
 
-  return formatPaginatedResponse({
-    totalItems: result.count,
-    page,
-    limit,
-    data: result.rows,
+  return cacheableList({
+    cacheKey,
+    repositoryCall: () => ordersRepository.findSellerOrders(sellerId, filters),
+    queryBuilderResult: normalized,
   });
 };
 

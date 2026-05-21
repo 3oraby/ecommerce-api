@@ -28,6 +28,24 @@ const cacheKeyBuilder = {
     `notifications:${userId}:${buildQueryKey(query)}`,
     
   notificationUnreadCount: (userId) => `notifications:unread_count:${userId}`,
+
+  favorites: (userId, query = {}) => `favorites:user:${userId}:${buildQueryKey(query)}`,
+
+  cart: (userId) => `cart:user:${userId}`,
+
+  orders: (userId, query = {}) => `orders:user:${userId}:${buildQueryKey(query)}`,
+
+  reviewsUser: (userId, query = {}) => `reviews:user:${userId}:${buildQueryKey(query)}`,
+  
+  reviewsProduct: (productId, query = {}) => `reviews:product:${productId}:${buildQueryKey(query)}`,
+
+  addresses: (userId) => `addresses:user:${userId}`,
+
+  cities: () => `locations:cities`,
+
+  states: () => `locations:states`,
+
+  countries: () => `locations:countries`,
 };
 
 module.exports = cacheKeyBuilder;
