@@ -49,10 +49,7 @@ exports.testNotification = asyncHandler(async (req, res, next) => {
 
 exports.getNotifications = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
-  const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit, 10) || 10;
-
-  const data = await notificationService.getNotifications(userId, page, limit);
+  const data = await notificationService.getNotifications(userId, req.query);
 
   sendResponse({
     res,

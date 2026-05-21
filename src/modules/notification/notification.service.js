@@ -1,5 +1,10 @@
 const notificationRepository = require("./notification.repository");
 const centralNotificationService = require("../../services/notifications/notification.service");
+const QueryBuilder = require("../../utils/queryBuilder");
+const { normalizeQuery } = require("../../utils/query.util");
+const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
+const { cacheableList, cacheOrFetch } = require("../../services/cache/cache.helper");
+const { invalidateNotificationsCache } = require("../../services/cache/cacheInvalidation.helper");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 
@@ -20,17 +25,23 @@ exports.sendPushNotification = async (payload) => {
   return await centralNotificationService.sendNotification(payload.userId, payload);
 };
 
-exports.getNotifications = async (userId, page = 1, limit = 10) => {
-  const offset = (page - 1) * limit;
-  const { count, rows } = await notificationRepository.getNotifications(userId, limit, offset);
+exports.getNotifications = async (userId, query = {}) => {
+  const qb = new QueryBuilder(query).paginate();
+  const normalized = qb.normalize();
+  const normQuery = normalizeQuery(normalized);
 
-  return {
-    totalItems: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
-    totalItemsInCurrentPage: rows.length,
-    notifications: rows,
-  };
+  const cacheKey = cacheKeyBuilder.notifications(userId, normQuery);
+
+  return cacheableList({
+    cacheKey,
+    repositoryCall: () =>
+      notificationRepository.getNotifications(
+        userId,
+        normalized.pagination.limit,
+        normalized.pagination.offset
+      ),
+    queryBuilderResult: normalized,
+  });
 };
 
 exports.markAsRead = async (notificationId, userId) => {
@@ -43,13 +54,18 @@ exports.markAsRead = async (notificationId, userId) => {
     throw new ApiError("Notification is already read", HttpStatus.BadRequest);
   }
 
-  return await notificationRepository.markAsRead(notificationId, userId);
+  const result = await notificationRepository.markAsRead(notificationId, userId);
+  await invalidateNotificationsCache(userId);
+  return result;
 };
 
 exports.markAllAsRead = async (userId) => {
-  return await notificationRepository.markAllAsRead(userId);
+  const result = await notificationRepository.markAllAsRead(userId);
+  await invalidateNotificationsCache(userId);
+  return result;
 };
 
 exports.getUnreadCount = async (userId) => {
-  return await notificationRepository.getUnreadCount(userId);
+  const cacheKey = cacheKeyBuilder.notificationUnreadCount(userId);
+  return cacheOrFetch(cacheKey, () => notificationRepository.getUnreadCount(userId));
 };

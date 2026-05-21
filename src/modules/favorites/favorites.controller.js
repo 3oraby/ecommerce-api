@@ -9,7 +9,6 @@ exports.getMyFavorites = asyncHandler(async (req, res) => {
   sendResponse({
     res,
     statusCode: HttpStatus.OK,
-    results: favorites.data.length,
     data: favorites,
   });
 });

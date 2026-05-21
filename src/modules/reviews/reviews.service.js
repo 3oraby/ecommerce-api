@@ -2,6 +2,7 @@ const reviewsRepository = require("./reviews.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const Roles = require("../../enums/roles.enum");
+const { formatPaginatedResponse } = require("../../utils/pagination.util");
 
 exports.getProductReviews = async (productId, features) => {
   const product = await reviewsRepository.findProductById(productId);
@@ -9,7 +10,20 @@ exports.getProductReviews = async (productId, features) => {
     throw new ApiError("Product not found", HttpStatus.NotFound);
   }
 
-  return await reviewsRepository.findProductReviews(productId, features);
+  const result = await reviewsRepository.findProductReviews(productId, features);
+
+  const page = features?.parsedPagination?.page || 1;
+  const limit = features?.parsedPagination?.limit || 10;
+
+  const formatted = formatPaginatedResponse({
+    totalItems: result.count,
+    page,
+    limit,
+    data: result.rows,
+  });
+
+  formatted.averageRating = result.averageRating;
+  return formatted;
 };
 
 exports.createReview = async (userId, productId, rating, review) => {

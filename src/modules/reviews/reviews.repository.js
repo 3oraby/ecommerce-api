@@ -139,10 +139,8 @@ exports.findProductReviews = async (productId, filters) => {
   });
 
   return {
-    total: count,
-    page: Math.floor(offset / limit) + 1,
-    limit,
+    count,
+    rows,
     averageRating: parseFloat(avgResult?.avgRating) || 0,
-    reviews: rows,
   };
 };

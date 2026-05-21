@@ -1,13 +1,6 @@
-class ApiFeatures {
-  constructor(query, queryString) {
-    if (!queryString && query) {
-      this.queryString = query;
-      this.query = null;
-    } else {
-      this.query = query;
-      this.queryString = queryString || {};
-    }
-    
+class QueryBuilder {
+  constructor(queryString = {}) {
+    this.queryString = queryString;
     this.parsedFilters = {};
     this.parsedSort = null;
     this.parsedPagination = { page: 1, limit: 10, offset: 0 };
@@ -100,4 +93,4 @@ class ApiFeatures {
   }
 }
 
-module.exports = ApiFeatures;
+module.exports = QueryBuilder;

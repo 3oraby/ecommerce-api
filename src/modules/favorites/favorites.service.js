@@ -4,6 +4,7 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 
 const ApiFeatures = require("../../utils/apiFeatures");
+const { formatPaginatedResponse } = require("../../utils/pagination.util");
 
 exports.getMyFavorites = async (userId, query) => {
   const features = new ApiFeatures({}, query).filter().sort().paginate();
@@ -20,15 +21,15 @@ exports.getMyFavorites = async (userId, query) => {
     order,
   );
 
-  return {
-    total: result.count,
+  return formatPaginatedResponse({
+    totalItems: result.count,
     page,
     limit,
     data: result.rows.map((favorite) => ({
       added_at: favorite.added_at,
       product: favorite.Product,
     })),
-  };
+  });
 };
 
 exports.addToFavorites = async (userId, productId) => {

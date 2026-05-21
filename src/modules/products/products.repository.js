@@ -151,10 +151,8 @@ exports.findWithCategoriesOrSearch = async ({
 
   const result = await Product.findAndCountAll(options);
   return {
-    total: result.count,
-    page: Math.floor(parsedPagination.offset / parsedPagination.limit) + 1,
-    limit: parsedPagination.limit,
-    data: result.rows,
+    count: result.count,
+    rows: result.rows,
   };
 };
 
@@ -191,23 +189,25 @@ exports.deleteProduct = async (id) => {
 };
 
 exports.getFeaturedProducts = async () => {
-  return await Product.findAll({
+  const rows = await Product.findAll({
     order: [["rating", "DESC"]],
     limit: 10,
     attributes: ["id", "name", "price", "main_image", "rating"],
   });
+  return { count: rows.length, rows };
 };
 
 exports.getNewArrivals = async () => {
-  return await Product.findAll({
+  const rows = await Product.findAll({
     order: [["created_at", "DESC"]],
     limit: 10,
     attributes: ["id", "name", "price", "main_image", "created_at"],
   });
+  return { count: rows.length, rows };
 };
 
 exports.getTopRatedProducts = async () => {
-  return await Product.findAll({
+  const rows = await Product.findAll({
     where: {
       rating: { [Op.gte]: 4 },
     },
@@ -215,10 +215,11 @@ exports.getTopRatedProducts = async () => {
     limit: 10,
     attributes: ["id", "name", "price", "main_image", "rating"],
   });
+  return { count: rows.length, rows };
 };
 
 exports.getBestSellers = async () => {
-  const results = await sequelize.query(
+  const rows = await sequelize.query(
     `
     SELECT p.id, p.name, p.price, p.main_image, SUM(oi.quantity) as sold_count
     FROM order_items oi
@@ -232,12 +233,13 @@ exports.getBestSellers = async () => {
     { type: sequelize.QueryTypes.SELECT },
   );
 
-  return results;
+  return { count: rows.length, rows };
 };
 
 exports.getHomeCategories = async () => {
-  return await Category.findAll({
+  const rows = await Category.findAll({
     attributes: ["id", "name"],
     limit: 10,
   });
+  return { count: rows.length, rows };
 };

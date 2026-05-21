@@ -10,6 +10,7 @@ const paymobService = require("../../services/paymob/paymob.service");
 const PaymentMethod = require("../../enums/paymentMethod.enum");
 const centralNotificationService = require("../../services/notifications/notification.service");
 const NotificationTypes = require("../../enums/notificationTypes.enum");
+const { formatPaginatedResponse } = require("../../utils/pagination.util");
 
 exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
   const address = await addressesRepository.findByIdAndUser(addressId, userId);
@@ -210,7 +211,15 @@ exports.cancelOrder = async (userId, orderId) => {
 };
 
 exports.getMyOrders = async (userId, filters) => {
-  return await ordersRepository.findUserOrders(userId, filters);
+  const result = await ordersRepository.findUserOrders(userId, filters);
+  const page = filters?.parsedPagination?.page || 1;
+  const limit = filters?.parsedPagination?.limit || 10;
+  return formatPaginatedResponse({
+    totalItems: result.count,
+    page,
+    limit,
+    data: result.rows,
+  });
 };
 
 exports.getMyCanceledOrders = async (userId, filters) => {
@@ -218,7 +227,15 @@ exports.getMyCanceledOrders = async (userId, filters) => {
     ...filters.parsedFilters,
     status: OrderStatus.CANCELED,
   };
-  return await ordersRepository.findUserOrders(userId, filters);
+  const result = await ordersRepository.findUserOrders(userId, filters);
+  const page = filters?.parsedPagination?.page || 1;
+  const limit = filters?.parsedPagination?.limit || 10;
+  return formatPaginatedResponse({
+    totalItems: result.count,
+    page,
+    limit,
+    data: result.rows,
+  });
 };
 
 exports.updateOrderStatusAdmin = async (orderId, newStatus) => {
@@ -265,18 +282,16 @@ exports.updateOrderStatusAdmin = async (orderId, newStatus) => {
 };
 
 exports.getSellerOrders = async (sellerId, filters) => {
-  const orders = await ordersRepository.findSellerOrders(sellerId, filters);
+  const result = await ordersRepository.findSellerOrders(sellerId, filters);
+  const page = filters?.parsedPagination?.page || 1;
+  const limit = filters?.parsedPagination?.limit || 10;
 
-  if (!orders.data || orders.total === 0) {
-    return {
-      total: 0,
-      page: 1,
-      limit: filters?.parsedPagination?.limit || 10,
-      data: [],
-    };
-  }
-
-  return orders;
+  return formatPaginatedResponse({
+    totalItems: result.count,
+    page,
+    limit,
+    data: result.rows,
+  });
 };
 
 exports.getOrderById = async (orderId, userId, role) => {

@@ -114,10 +114,8 @@ exports.findSellerOrders = async (userId, filters) => {
 
   if (!sellerProfile) {
     return {
-      total: 0,
-      page: 1,
-      limit,
-      data: [],
+      count: 0,
+      rows: [],
     };
   }
 
@@ -179,10 +177,8 @@ exports.findSellerOrders = async (userId, filters) => {
   });
 
   return {
-    total: result.count,
-    page: Math.floor(offset / limit) + 1,
-    limit,
-    data,
+    count: result.count,
+    rows: data,
   };
 };
 

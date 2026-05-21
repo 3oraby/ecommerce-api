@@ -23,6 +23,11 @@ const cacheKeyBuilder = {
   homeData: () => "home",
 
   paymentMethods: () => "payment:methods",
+
+  notifications: (userId, query = {}) =>
+    `notifications:${userId}:${buildQueryKey(query)}`,
+    
+  notificationUnreadCount: (userId) => `notifications:unread_count:${userId}`,
 };
 
 module.exports = cacheKeyBuilder;

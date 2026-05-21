@@ -1,12 +1,13 @@
 const productsRepository = require("./products.repository");
 const categoriesRepository = require("../categories/categories.repository");
-const ApiFeatures = require("../../utils/apiFeatures");
+const QueryBuilder = require("../../utils/queryBuilder");
+const { normalizeQuery } = require("../../utils/query.util");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const { sanitizeAndValidateIds } = require("../../utils/array.util");
 const { Op } = require("sequelize");
 const { setCache } = require("../../services/cache/cache.service");
-const { cacheOrFetch } = require("../../services/cache/cache.helper");
+const { cacheOrFetch, cacheableList } = require("../../services/cache/cache.helper");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const {
   invalidateProductCaches,
@@ -16,22 +17,16 @@ const NotificationTypes = require("../../enums/notificationTypes.enum");
 const favoritesRepository = require("../favorites/favorites.repository");
 
 const buildProductQuery = (query, options = {}) => {
-  const filterParams = { ...query };
-
-  const searchKeyword = query.q || query.keyword;
-  const categoryId = query.category;
-
-  ["q", "keyword", "category", "minPrice", "maxPrice", "inStock"].forEach(
-    (el) => delete filterParams[el],
-  );
-
-  const features = new ApiFeatures({}, filterParams)
-    .filter()
+  const qb = new QueryBuilder(query)
+    .filter(["category", "minPrice", "maxPrice", "inStock"])
     .sort()
     .limitFields()
-    .paginate();
+    .paginate()
+    .search();
 
-  const where = { ...(features.parsedFilters || {}) };
+  const normalized = qb.normalize();
+
+  const where = { ...(normalized.filters || {}) };
 
   if (options.sellerId) {
     where.seller_id = options.sellerId;
@@ -53,21 +48,14 @@ const buildProductQuery = (query, options = {}) => {
 
   return {
     where,
-    parsedSort: features.parsedSort,
-    parsedAttributes: features.parsedAttributes,
-    parsedPagination: features.parsedPagination,
-    searchKeyword,
-    categoryId,
+    parsedSort: normalized.sort,
+    parsedAttributes: normalized.attributes,
+    parsedPagination: normalized.pagination,
+    searchKeyword: normalized.search,
+    categoryId: query.category,
+    queryBuilderResult: normalized
   };
 };
-
-const normalizeQuery = (q) => ({
-  page: q.parsedPagination?.page || 1,
-  limit: q.parsedPagination?.limit || 10,
-  sort: q.parsedSort || null,
-  search: q.searchKeyword || null,
-  categoryId: q.categoryId || null,
-});
 
 exports.getProductById = async (id) => {
   const key = cacheKeyBuilder.product(id);
@@ -91,19 +79,13 @@ exports.getProductsByCategory = async (categoryId, user, query) => {
   const built = buildProductQuery(query, user);
   built.categoryId = categoryId;
 
-  const norm = normalizeQuery(built);
-
+  const norm = normalizeQuery(built.queryBuilderResult, { categoryId });
   const key = cacheKeyBuilder.products(norm);
 
-  return cacheOrFetch(key, async () => {
-    const result = await productsRepository.findWithCategoriesOrSearch(built);
-
-    return {
-      total: result.total || 0,
-      page: norm.page,
-      limit: norm.limit,
-      data: result.data || [],
-    };
+  return cacheableList({
+    cacheKey: key,
+    repositoryCall: () => productsRepository.findWithCategoriesOrSearch(built),
+    queryBuilderResult: built.queryBuilderResult
   });
 };
 
@@ -111,34 +93,29 @@ exports.getSellerProducts = async (query, sellerProfile) => {
   const builtQuery = buildProductQuery(query, {
     sellerId: sellerProfile?.id,
   });
-  const norm = normalizeQuery(builtQuery);
+  const norm = normalizeQuery(builtQuery.queryBuilderResult);
 
   const key = cacheKeyBuilder.sellerProducts(sellerProfile?.id, norm);
 
-  return cacheOrFetch(key, async () => {
-    const result =
-      await productsRepository.findWithCategoriesOrSearch(builtQuery);
-
-    return {
-      total: result.total || 0,
-      page: norm.page,
-      limit: norm.limit,
-      data: result.data || [],
-    };
+  return cacheableList({
+    cacheKey: key,
+    repositoryCall: () => productsRepository.findWithCategoriesOrSearch(builtQuery),
+    queryBuilderResult: builtQuery.queryBuilderResult
   });
 };
 
 exports.searchProducts = async (query, user) => {
   const built = buildProductQuery(query, user);
-  const norm = normalizeQuery(built);
+  const norm = normalizeQuery(built.queryBuilderResult);
 
   const key = cacheKeyBuilder.products(norm);
 
-  return cacheOrFetch(
-    key,
-    () => productsRepository.findWithCategoriesOrSearch(built),
-    "5m",
-  );
+  return cacheableList({
+    cacheKey: key,
+    repositoryCall: () => productsRepository.findWithCategoriesOrSearch(built),
+    queryBuilderResult: built.queryBuilderResult,
+    ttl: "5m"
+  });
 };
 
 exports.createProduct = async (sellerId, data) => {
@@ -267,11 +244,11 @@ exports.getHomeData = async () => {
       ]);
 
     return {
-      featured_products: featured,
-      new_arrivals: newArrivals,
-      top_rated: topRated,
-      best_sellers: bestSellers,
-      categories,
+      featured_products: featured.rows,
+      new_arrivals: newArrivals.rows,
+      top_rated: topRated.rows,
+      best_sellers: bestSellers.rows,
+      categories: categories.rows,
     };
   });
 };

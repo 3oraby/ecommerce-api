@@ -15,4 +15,12 @@ module.exports = {
   paymentMethods: {
     all: "payment:methods*",
   },
+  notifications: {
+    all(userId) {
+      return `notifications:${userId}:*`;
+    },
+    unreadCount(userId) {
+      return `notifications:unread_count:${userId}`;
+    }
+  }
 };

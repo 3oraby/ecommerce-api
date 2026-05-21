@@ -33,29 +33,27 @@ exports.cancelOrder = asyncHandler(async (req, res, next) => {
 
 exports.getMyOrders = asyncHandler(async (req, res, next) => {
   const features = new ApiFeatures(null, req.query).filter().sort().paginate();
-  const { count, rows } = await ordersService.getMyOrders(
+  const data = await ordersService.getMyOrders(
     req.user.id,
     features,
   );
 
   sendResponse({
     res,
-    results: count,
-    data: rows,
+    data,
   });
 });
 
 exports.getMyCanceledOrders = asyncHandler(async (req, res, next) => {
   const features = new ApiFeatures(null, req.query).filter().sort().paginate();
-  const { count, rows } = await ordersService.getMyCanceledOrders(
+  const data = await ordersService.getMyCanceledOrders(
     req.user.id,
     features,
   );
 
   sendResponse({
     res,
-    results: count,
-    data: rows,
+    data,
   });
 });
 

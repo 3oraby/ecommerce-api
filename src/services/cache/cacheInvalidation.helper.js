@@ -17,3 +17,10 @@ exports.invalidateProductCaches = async ({ productId } = {}) => {
 exports.invalidatePaymentMethodsCache = async () => {
   await deleteByPattern(patterns.paymentMethods.all);
 };
+
+exports.invalidateNotificationsCache = async (userId) => {
+  await Promise.all([
+    deleteByPattern(patterns.notifications.all(userId)),
+    deleteCache(patterns.notifications.unreadCount(userId))
+  ]);
+};

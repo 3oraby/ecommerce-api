@@ -13,7 +13,6 @@ exports.getProductReviews = asyncHandler(async (req, res, next) => {
 
   sendResponse({
     res,
-    results: data.reviews.length,
     data: data,
   });
 });

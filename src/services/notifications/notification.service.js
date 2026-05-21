@@ -3,6 +3,8 @@ const notificationProvider = require("./notification.provider");
 const notificationTypes = require("../../enums/notificationTypes.enum");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
+const { invalidateNotificationsCache } = require("../cache/cacheInvalidation.helper");
+
 
 class NotificationService {
   async createNotification(userId, payload) {
@@ -14,13 +16,17 @@ class NotificationService {
         throw new ApiError("Invalid notification type", HttpStatus.BadRequest);
       }
 
-      return await notificationRepository.createNotification({
+      const notification = await notificationRepository.createNotification({
         user_id: userId,
         title,
         body,
         type,
         data: data || {},
       });
+      
+      await invalidateNotificationsCache(userId);
+      
+      return notification;
     } catch (error) {
       console.error(
         `Failed to save notification for user ${userId}:`,
