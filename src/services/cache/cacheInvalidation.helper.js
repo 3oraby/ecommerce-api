@@ -41,7 +41,6 @@ exports.invalidateReviewsCache = async (userId, productId) => {
   const promises = [];
   if (userId) promises.push(deleteByPattern(patterns.reviews.user(userId)));
   if (productId) promises.push(deleteByPattern(patterns.reviews.product(productId)));
-  // Product ratings are part of the product cache, which might be invalidated via invalidateProductCaches
   if (productId) promises.push(exports.invalidateProductCaches({ productId }));
   
   await Promise.all(promises);
@@ -49,4 +48,16 @@ exports.invalidateReviewsCache = async (userId, productId) => {
 
 exports.invalidateAddressesCache = async (userId) => {
   await deleteCache(patterns.addresses.user(userId));
+};
+
+exports.invalidateCategoriesCache = async ({categoryId} = {}) => {
+  const promises = [
+    deleteByPattern(patterns.categories.all),
+  ];
+
+  if (categoryId) {
+    promises.push(deleteCache(patterns.category.this(categoryId)));
+  }
+
+  await Promise.all(promises);
 };

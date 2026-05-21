@@ -15,6 +15,14 @@ module.exports = {
   paymentMethods: {
     all: "payment:methods*",
   },
+  category: {
+    this(id) {
+      return `category:${id}`;
+    }
+  },
+  categories: {
+    all: "categories:*"
+  },
   notifications: {
     all(userId) {
       return `notifications:${userId}:*`;

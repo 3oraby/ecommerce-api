@@ -24,6 +24,10 @@ const cacheKeyBuilder = {
 
   paymentMethods: () => "payment:methods",
 
+  category: (id) => `category:${id}`,
+  
+  categories: (query = {}) => `categories:${buildQueryKey(query)}`,
+
   notifications: (userId, query = {}) =>
     `notifications:${userId}:${buildQueryKey(query)}`,
     

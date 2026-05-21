@@ -1,36 +1,68 @@
 const categoriesRepository = require("./categories.repository");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
+const {
+  invalidateCategoriesCache,
+} = require("../../services/cache/cacheInvalidation.helper");
+const { cacheOrFetch } = require("../../services/cache/cache.helper");
+const cacheKeysUtil = require("../../services/cache/cacheKeys.util");
 
 const normalizeName = (name) => {
   if (!name) return name;
-  return name.trim().toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
 exports.createCategory = async (data) => {
   const normalizedName = normalizeName(data.name);
 
-  const existingCategory = await categoriesRepository.findByName(normalizedName);
+  const existingCategory =
+    await categoriesRepository.findByName(normalizedName);
   if (existingCategory) {
     throw new ApiError("Category name already exists", HttpStatus.BadRequest);
   }
 
-  return await categoriesRepository.create({
+  const category = await categoriesRepository.create({
     ...data,
     name: normalizedName,
   });
+
+  invalidateCategoriesCache();
+  return category;
 };
 
 exports.getAllCategories = async () => {
-  return await categoriesRepository.findAll();
+  const cacheKey = cacheKeysUtil.categories();
+
+  const cachedCategories = await cacheOrFetch(
+    cacheKey,
+    async () => {
+      return await categoriesRepository.findAll();
+    },
+    "1w"
+  );
+
+  return cachedCategories;
 };
 
 exports.getCategoryById = async (id) => {
-  const category = await categoriesRepository.findByPk(id);
-  if (!category) {
+  const cacheKey = cacheKeysUtil.category(id);
+
+  const cachedCategory = await cacheOrFetch(
+    cacheKey,
+    async () => {
+      return await categoriesRepository.findByPk(id);
+    },
+    "1w",
+  );
+
+  if (!cachedCategory) {
     throw new ApiError("Category not found", HttpStatus.NotFound);
   }
-  return category;
+
+  return cachedCategory;
 };
 
 exports.updateCategory = async (id, data) => {
@@ -43,20 +75,30 @@ exports.updateCategory = async (id, data) => {
 
   if (data.name) {
     const normalizedName = normalizeName(data.name);
-    const existingCategory = await categoriesRepository.findByNameExceptId(normalizedName, id);
+    const existingCategory = await categoriesRepository.findByNameExceptId(
+      normalizedName,
+      id,
+    );
     if (existingCategory) {
       throw new ApiError("Category name already exists", HttpStatus.BadRequest);
     }
     updateData.name = normalizedName;
   }
 
-  return await categoriesRepository.update(id, updateData);
+  const updatedCategory = await categoriesRepository.update(id, updateData);
+
+  invalidateCategoriesCache({categoryId: id});
+  return updatedCategory;
 };
 
 exports.deleteCategory = async (id) => {
-  const result = await categoriesRepository.destroy(id);
-  if (!result) {
+  const category = await categoriesRepository.findByPk(id);
+  if (!category) {
     throw new ApiError("Category not found", HttpStatus.NotFound);
   }
-  return result;
+
+  await categoriesRepository.destroy(id);
+
+  invalidateCategoriesCache({categoryId: id});
+  return category;
 };
