@@ -61,7 +61,6 @@ exports.searchProducts = asyncHandler(async (req, res) => {
   sendResponse({
     res,
     statusCode: HttpStatus.OK,
-    results: products.data.length,
     data: products,
   });
 });

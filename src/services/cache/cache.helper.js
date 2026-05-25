@@ -16,7 +16,12 @@ exports.cacheOrFetch = async (key, fetchFn, ttl = process.env.CACHE_TTL) => {
   return data;
 };
 
-exports.cacheableList = async ({ cacheKey, repositoryCall, queryBuilderResult, ttl }) => {
+exports.cacheableList = async ({
+  cacheKey,
+  repositoryCall,
+  queryBuilderResult,
+  ttl = process.env.CACHE_TTL,
+}) => {
   return exports.cacheOrFetch(cacheKey, async () => {
     const result = await repositoryCall();
 
