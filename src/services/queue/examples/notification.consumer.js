@@ -1,5 +1,5 @@
 const queueService = require('../queue.service');
-const { QUEUES } = require('../constants/queue.constants');
+const { QUEUES, RETRY_STRATEGY } = require('../constants/queue.constants');
 
 const processNotification = async (data) => {
   console.log(`Processing notification for user ${data.userId} of type ${data.type}`);
@@ -18,9 +18,9 @@ const startNotificationConsumer = async () => {
   try {
     console.log('Starting notification consumer...');
     
-    await queueService.setupQueueWithRetry(QUEUES.NOTIFICATIONS, { retryDelay: 5000 });
+    await queueService.setupQueueWithRetry(QUEUES.NOTIFICATIONS, RETRY_STRATEGY);
 
-    await queueService.consume(QUEUES.NOTIFICATIONS, processNotification, 3);
+    await queueService.consume(QUEUES.NOTIFICATIONS, processNotification, RETRY_STRATEGY);
     
     console.log('Notification consumer started successfully.');
   } catch (error) {
@@ -31,3 +31,4 @@ const startNotificationConsumer = async () => {
 module.exports = {
   startNotificationConsumer,
 };
+

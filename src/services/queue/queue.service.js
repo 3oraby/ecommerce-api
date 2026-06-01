@@ -1,4 +1,5 @@
 const rabbitMQProvider = require('./providers/rabbitmq.provider');
+const { getRetryStrategy } = require('./constants/queue.constants');
 
 class QueueService {
   constructor() {
@@ -9,9 +10,9 @@ class QueueService {
     await this.provider.connect();
   }
 
-  async setupQueueWithRetry(baseQueueName, options = { retryDelay: 5000 }) {
+  async setupQueueWithRetry(baseQueueName, retryStrategy = null) {
+    const strategy = retryStrategy || getRetryStrategy(baseQueueName);
     const mainQueue = baseQueueName;
-    const retryQueue = `${baseQueueName}.retry`;
     const dlqQueue = `${baseQueueName}.dlq`;
     const exchange = `${baseQueueName}.exchange`;
 
@@ -21,12 +22,15 @@ class QueueService {
 
     await channel.assertExchange(exchange, 'direct', { durable: true });
     
-    await channel.assertQueue(retryQueue, {
-      durable: true,
-      deadLetterExchange: exchange,
-      deadLetterRoutingKey: mainQueue,
-      messageTtl: options.retryDelay,
-    });
+    // Assert all retry queues defined in the strategy
+    for (const step of strategy) {
+      await channel.assertQueue(step.queue, {
+        durable: true,
+        deadLetterExchange: exchange,
+        deadLetterRoutingKey: mainQueue,
+        messageTtl: step.delay,
+      });
+    }
 
     await channel.assertQueue(mainQueue, {
       durable: true,
@@ -41,28 +45,53 @@ class QueueService {
     return this.provider.publish(queue, data, options);
   }
 
-  async consume(queue, handler, maxRetries = 3) {
+  async consume(queue, handler, retryStrategy = null) {
+    let strategy = retryStrategy;
+    if (typeof retryStrategy === 'number') {
+      strategy = Array.from({ length: retryStrategy }, (_, i) => ({
+        queue: `${queue}.retry`,
+        delay: 5000,
+      }));
+    } else if (!strategy) {
+      strategy = getRetryStrategy(queue);
+    }
+
     await this.provider.consume(queue, async (data, msg) => {
       try {
         await handler(data);
         await this.provider.ack(msg);
       } catch (error) {
         console.error(`Error processing message from ${queue}:`, error.message);
-        await this.handleFailure(queue, data, msg, error, maxRetries);
+        await this.handleFailure(queue, data, msg, error, strategy);
       }
     });
   }
 
-  async handleFailure(queue, data, msg, error, maxRetries) {
+  async handleFailure(queue, data, msg, error, retryStrategy = null) {
     const headers = msg.properties.headers || {};
     const retryCount = headers['x-retry-count'] || 0;
 
-    if (retryCount < maxRetries) {
-      console.log(`Retrying message from ${queue} (Attempt ${retryCount + 1} of ${maxRetries})`);
+    let strategy = retryStrategy;
+    if (typeof retryStrategy === 'number') {
+      strategy = Array.from({ length: retryStrategy }, (_, i) => ({
+        queue: `${queue}.retry`,
+        delay: 5000,
+      }));
+    } else if (!strategy) {
+      strategy = getRetryStrategy(queue);
+    }
+
+    if (retryCount < strategy.length) {
+      const step = strategy[retryCount];
+      const nextQueue = step.queue;
+      const nextDelay = step.delay;
+
+      console.log(`[${queue}]`);
+      console.log(`Retry #${retryCount}`);
+      console.log(`Moving to ${nextQueue}`);
+      console.log(`Delay: ${nextDelay} ms`);
       
-      const retryQueue = `${queue}.retry`;
-      
-      await this.provider.publish(retryQueue, data, {
+      await this.provider.publish(nextQueue, data, {
         headers: {
           ...headers,
           'x-retry-count': retryCount + 1,
@@ -72,7 +101,9 @@ class QueueService {
       
       await this.provider.ack(msg);
     } else {
-      console.error(`Max retries (${maxRetries}) exceeded for message from ${queue}. Moving to DLQ.`);
+      console.error(`[${queue}]`);
+      console.error(`Max retries exceeded`);
+      console.error(`Moved to ${queue}.dlq`);
       
       const dlqQueue = `${queue}.dlq`;
       
@@ -95,3 +126,4 @@ class QueueService {
 
 const queueService = new QueueService();
 module.exports = queueService;
+
