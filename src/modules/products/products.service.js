@@ -15,7 +15,7 @@ const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const {
   invalidateProductCaches,
 } = require("../../services/cache/cacheInvalidation.helper");
-const centralNotificationService = require("../../services/notifications/notification.service");
+const notificationPublisher = require("../../services/notifications/notification.publisher");
 const NotificationTypes = require("../../enums/notificationTypes.enum");
 const favoritesRepository = require("../favorites/favorites.repository");
 
@@ -205,7 +205,7 @@ exports.updateProduct = async (id, data) => {
 
       if (userIds.length > 0) {
         if (notifyBackInStock) {
-          await centralNotificationService.sendBulkNotifications(userIds, {
+          await notificationPublisher.sendBulkNotifications(userIds, {
             title: "Product Back in Stock!",
             body: `${product.name} is back in stock. Grab it before it's gone!`,
             type: NotificationTypes.PRODUCT_BACK_IN_STOCK,
@@ -214,7 +214,7 @@ exports.updateProduct = async (id, data) => {
         }
 
         if (notifyPriceDrop) {
-          await centralNotificationService.sendBulkNotifications(userIds, {
+          await notificationPublisher.sendBulkNotifications(userIds, {
             title: "Price Drop Alert!",
             body: `Great news! ${product.name} is now cheaper.`,
             type: NotificationTypes.PRICE_DROP,

@@ -7,7 +7,7 @@ const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const { cacheOrFetch } = require("../../services/cache/cache.helper");
 const cartRepository = require("../cart/cart.repository");
 const ordersRepository = require("../orders/orders.repository");
-const centralNotificationService = require("../../services/notifications/notification.service");
+const notificationPublisher = require("../../services/notifications/notification.publisher");
 const NotificationTypes = require("../../enums/notificationTypes.enum");
 const ApiError = require("../../utils/apiError");
 
@@ -73,7 +73,8 @@ exports.handleWebhook = async (queryData, hmac) => {
 
     if (!success || pending) {
       if (!pending) {
-        await centralNotificationService.sendNotification(userId, {
+        await notificationPublisher.sendNotification({
+          userId,
           title: "Payment Failed",
           body: `Your payment for cart #${cartId} failed. Please try again.`,
           type: NotificationTypes.PAYMENT_FAILED,
@@ -98,7 +99,6 @@ exports.handleWebhook = async (queryData, hmac) => {
     let finalMethod = "VISA";
     const subType = obj.source_data?.sub_type || obj.source_data?.type || "";
     if (subType.toLowerCase() === "wallet") finalMethod = "MOBILE_WALLET";
-    else if (subType.toLowerCase() === "fawry") finalMethod = "FAWRY";
 
     const orderData = {
       user_id: cart.user_id,
@@ -122,7 +122,8 @@ exports.handleWebhook = async (queryData, hmac) => {
 
     await ordersRepository.processCheckout(cartId, orderData, true);
 
-    await centralNotificationService.sendNotification(userId, {
+    await notificationPublisher.sendNotification({
+      userId,
       title: "Payment Successful",
       body: `Your payment was successful and your order has been created.`,
       type: NotificationTypes.PAYMENT_SUCCESS,
@@ -130,7 +131,8 @@ exports.handleWebhook = async (queryData, hmac) => {
     });
     
     // Also trigger ORDER_CREATED notification since payment created the order
-    await centralNotificationService.sendNotification(userId, {
+    await notificationPublisher.sendNotification({
+      userId,
       title: "Order Created",
       body: `Your paid order has been created successfully.`,
       type: NotificationTypes.ORDER_CREATED,
@@ -141,7 +143,8 @@ exports.handleWebhook = async (queryData, hmac) => {
     const sellerIds = [...new Set(cart.items.map(item => item.product.seller_id))];
     for (const sellerId of sellerIds) {
       if (sellerId) {
-        await centralNotificationService.sendNotification(sellerId, {
+        await notificationPublisher.sendNotification({
+          userId: sellerId,
           title: "New Order Received",
           body: `You have a new paid order containing your products.`,
           type: NotificationTypes.NEW_ORDER,

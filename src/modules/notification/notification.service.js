@@ -1,5 +1,5 @@
 const notificationRepository = require("./notification.repository");
-const centralNotificationService = require("../../services/notifications/notification.service");
+const notificationPublisher = require("../../services/notifications/notification.publisher");
 const QueryBuilder = require("../../utils/queryBuilder");
 const { normalizeQuery } = require("../../utils/query.util");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
@@ -22,7 +22,7 @@ exports.saveFcmToken = async (userId, fcmToken) => {
 };
 
 exports.sendPushNotification = async (payload) => {
-  return await centralNotificationService.sendNotification(payload.userId, payload);
+  return await notificationPublisher.sendNotification(payload);
 };
 
 exports.getNotifications = async (userId, query = {}) => {

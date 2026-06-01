@@ -20,7 +20,7 @@ exports.saveFcmToken = asyncHandler(async (req, res, next) => {
 exports.testNotification = asyncHandler(async (req, res, next) => {
   const userId = req.user.id;
 
-  const response = await notificationService.sendPushNotification({
+  await notificationService.sendPushNotification({
     userId,
     title: "Test Notification",
     body: "Firebase notification system is working successfully.",
@@ -28,22 +28,10 @@ exports.testNotification = asyncHandler(async (req, res, next) => {
     data: { test: "true" }
   });
 
-  if (!response) {
-    return sendResponse({
-      res,
-      statusCode: HttpStatus.OK,
-      message: "No devices registered for this user.",
-    });
-  }
-
   sendResponse({
     res,
     statusCode: HttpStatus.OK,
-    message: "Test push notification sent",
-    data: {
-      successCount: response.successCount,
-      failureCount: response.failureCount,
-    }
+    message: "Test push notification queued for sending",
   });
 });
 

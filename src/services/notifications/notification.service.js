@@ -3,8 +3,9 @@ const notificationProvider = require("./notification.provider");
 const notificationTypes = require("../../enums/notificationTypes.enum");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
-const { invalidateNotificationsCache } = require("../cache/cacheInvalidation.helper");
-
+const {
+  invalidateNotificationsCache,
+} = require("../cache/cacheInvalidation.helper");
 
 class NotificationService {
   async createNotification(userId, payload) {
@@ -23,9 +24,9 @@ class NotificationService {
         type,
         data: data || {},
       });
-      
+
       await invalidateNotificationsCache(userId);
-      
+
       return notification;
     } catch (error) {
       console.error(
@@ -36,7 +37,8 @@ class NotificationService {
     }
   }
 
-  async sendNotification(userId, payload) {
+  async processNotification(payload) {
+    const { userId } = payload;
     const notification = await this.createNotification(userId, payload);
 
     try {
@@ -73,15 +75,6 @@ class NotificationService {
     }
 
     return notification;
-  }
-
-  async sendBulkNotifications(userIds, payload) {
-    const results = [];
-    for (const userId of userIds) {
-      const result = await this.sendNotification(userId, payload);
-      results.push(result);
-    }
-    return results;
   }
 }
 
