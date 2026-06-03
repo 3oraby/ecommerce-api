@@ -10,11 +10,12 @@ const paymobService = require("../../services/paymob/paymob.service");
 const PaymentMethod = require("../../enums/paymentMethod.enum");
 const notificationPublisher = require("../../services/notifications/notification.publisher");
 const NotificationTypes = require("../../enums/notificationTypes.enum");
-const { formatPaginatedResponse } = require("../../utils/pagination.util");
-const { normalizeQuery } = require("../../utils/query.util");
+const { normalizeRequestQuery } = require("../../utils/query.util");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const { cacheableList } = require("../../services/cache/cache.helper");
-const { invalidateOrdersCache } = require("../../services/cache/cacheInvalidation.helper");
+const {
+  invalidateOrdersCache,
+} = require("../../services/cache/cacheInvalidation.helper");
 
 exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
   const address = await addressesRepository.findByIdAndUser(addressId, userId);
@@ -91,9 +92,11 @@ exports.checkout = async (userId, addressId, paymentMethod, walletPhone) => {
       type: NotificationTypes.ORDER_CREATED,
       data: { orderId: order.id },
     });
-    
+
     // Notify sellers
-    const sellerIds = [...new Set(cart.items.map(item => item.product.seller_id))];
+    const sellerIds = [
+      ...new Set(cart.items.map((item) => item.product.seller_id)),
+    ];
     for (const sellerId of sellerIds) {
       if (sellerId) {
         await notificationPublisher.sendNotification({
@@ -207,7 +210,7 @@ exports.cancelOrder = async (userId, orderId) => {
   }
 
   await ordersRepository.cancelOrder(orderId);
-  
+
   await notificationPublisher.sendNotification({
     userId,
     title: "Order Canceled",
@@ -215,15 +218,15 @@ exports.cancelOrder = async (userId, orderId) => {
     type: NotificationTypes.ORDER_CANCELED,
     data: { orderId: order.id },
   });
-  
+
   await invalidateOrdersCache(userId);
-  
+
   return { success: true };
 };
 
-exports.getMyOrders = async (userId, filters) => {
+exports.getMyOrders = async (userId, filters, query) => {
   const normalized = filters.normalize();
-  const normQuery = normalizeQuery(normalized);
+  const normQuery = normalizeRequestQuery(query);
   const cacheKey = cacheKeyBuilder.orders(userId, normQuery);
 
   return cacheableList({
@@ -233,14 +236,14 @@ exports.getMyOrders = async (userId, filters) => {
   });
 };
 
-exports.getMyCanceledOrders = async (userId, filters) => {
+exports.getMyCanceledOrders = async (userId, filters, query) => {
   filters.parsedFilters = {
     ...filters.parsedFilters,
     status: OrderStatus.CANCELED,
   };
-  
+
   const normalized = filters.normalize();
-  const normQuery = normalizeQuery(normalized);
+  const normQuery = normalizeRequestQuery(query);
   const cacheKey = cacheKeyBuilder.orders(userId, normQuery);
 
   return cacheableList({
@@ -275,7 +278,7 @@ exports.updateOrderStatusAdmin = async (orderId, newStatus) => {
   }
 
   await ordersRepository.updateOrderStatus(orderId, newStatus);
-  
+
   if (newStatus === OrderStatus.SHIPPED) {
     await notificationPublisher.sendNotification({
       userId: order.user_id,
@@ -297,10 +300,13 @@ exports.updateOrderStatusAdmin = async (orderId, newStatus) => {
   await invalidateOrdersCache(order.user_id);
 };
 
-exports.getSellerOrders = async (sellerId, filters) => {
+exports.getSellerOrders = async (sellerId, filters, query) => {
   const normalized = filters.normalize();
-  const normQuery = normalizeQuery(normalized);
-  const cacheKey = cacheKeyBuilder.orders(sellerId, { ...normQuery, role: "seller" });
+  const normQuery = normalizeRequestQuery(query);
+  const cacheKey = cacheKeyBuilder.orders(sellerId, {
+    ...normQuery,
+    role: "seller",
+  });
 
   return cacheableList({
     cacheKey,

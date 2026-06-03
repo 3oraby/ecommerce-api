@@ -36,6 +36,7 @@ exports.getMyOrders = asyncHandler(async (req, res, next) => {
   const data = await ordersService.getMyOrders(
     req.user.id,
     features,
+    req.query,
   );
 
   sendResponse({
@@ -49,6 +50,7 @@ exports.getMyCanceledOrders = asyncHandler(async (req, res, next) => {
   const data = await ordersService.getMyCanceledOrders(
     req.user.id,
     features,
+    req.query,
   );
 
   sendResponse({
@@ -69,7 +71,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res, next) => {
 exports.getSellerOrders = asyncHandler(async (req, res, next) => {
   const features = new ApiFeatures(null, req.query).filter().sort().paginate();
 
-  const data = await ordersService.getSellerOrders(req.user.id, features);
+  const data = await ordersService.getSellerOrders(req.user.id, features, req.query);
 
   sendResponse({
     res,

@@ -9,6 +9,7 @@ exports.getProductReviews = asyncHandler(async (req, res, next) => {
   const data = await reviewsService.getProductReviews(
     req.params.productId,
     features,
+    req.query,
   );
 
   sendResponse({
@@ -47,7 +48,11 @@ exports.updateReview = asyncHandler(async (req, res, next) => {
 });
 
 exports.deleteReview = asyncHandler(async (req, res, next) => {
-  await reviewsService.deleteReview(req.user.id, req.user.role, req.params.productId);
+  await reviewsService.deleteReview(
+    req.user.id,
+    req.user.role,
+    req.params.productId,
+  );
 
   sendResponse({
     res,

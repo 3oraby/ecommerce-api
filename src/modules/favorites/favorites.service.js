@@ -4,10 +4,12 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 
 const ApiFeatures = require("../../utils/apiFeatures");
-const { normalizeQuery } = require("../../utils/query.util");
+const { normalizeRequestQuery } = require("../../utils/query.util");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const { cacheableList } = require("../../services/cache/cache.helper");
-const { invalidateFavoritesCache } = require("../../services/cache/cacheInvalidation.helper");
+const {
+  invalidateFavoritesCache,
+} = require("../../services/cache/cacheInvalidation.helper");
 
 exports.getMyFavorites = async (userId, query) => {
   const features = new ApiFeatures({}, query).filter().sort().paginate();
@@ -15,11 +17,10 @@ exports.getMyFavorites = async (userId, query) => {
   const limit = features.parsedPagination?.limit || 10;
   const offset = features.parsedPagination?.offset || 0;
   const order = [["added_at", "DESC"]];
-  const page = Number(query.page) || 1;
 
   const normalized = features.normalize();
-  const normQuery = normalizeQuery(normalized);
-  
+  const normQuery = normalizeRequestQuery(query);
+
   const cacheKey = cacheKeyBuilder.favorites(userId, normQuery);
 
   return cacheableList({
@@ -37,7 +38,7 @@ exports.getMyFavorites = async (userId, query) => {
       }));
       return result;
     },
-    queryBuilderResult: normalized
+    queryBuilderResult: normalized,
   });
 };
 

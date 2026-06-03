@@ -1,7 +1,7 @@
 const notificationRepository = require("./notification.repository");
 const notificationPublisher = require("../../services/notifications/notification.publisher");
 const QueryBuilder = require("../../utils/queryBuilder");
-const { normalizeQuery } = require("../../utils/query.util");
+const { normalizeRequestQuery } = require("../../utils/query.util");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const { cacheableList, cacheOrFetch } = require("../../services/cache/cache.helper");
 const { invalidateNotificationsCache } = require("../../services/cache/cacheInvalidation.helper");
@@ -28,7 +28,7 @@ exports.sendPushNotification = async (payload) => {
 exports.getNotifications = async (userId, query = {}) => {
   const qb = new QueryBuilder(query).paginate();
   const normalized = qb.normalize();
-  const normQuery = normalizeQuery(normalized);
+  const normQuery = normalizeRequestQuery(query);
 
   const cacheKey = cacheKeyBuilder.notifications(userId, normQuery);
 

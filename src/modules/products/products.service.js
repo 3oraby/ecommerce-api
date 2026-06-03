@@ -1,7 +1,7 @@
 const productsRepository = require("./products.repository");
 const categoriesRepository = require("../categories/categories.repository");
 const QueryBuilder = require("../../utils/queryBuilder");
-const { normalizeQuery } = require("../../utils/query.util");
+const { normalizeRequestQuery } = require("../../utils/query.util");
 const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const { sanitizeAndValidateIds } = require("../../utils/array.util");
@@ -49,8 +49,6 @@ const buildProductQuery = (query, options = {}) => {
     where.stock = { [Op.gt]: 0 };
   }
 
-  console.log("normalized: ", normalized);
-
   return {
     where,
     parsedSort: normalized.sort,
@@ -84,7 +82,7 @@ exports.getProductsByCategory = async (categoryId, user, query) => {
   const built = buildProductQuery(query, user);
   built.categoryId = categoryId;
 
-  const norm = normalizeQuery(built.queryBuilderResult, { categoryId });
+  const norm = normalizeRequestQuery(query, { categoryId });
   const key = cacheKeyBuilder.products(norm);
 
   return cacheableList({
@@ -98,7 +96,7 @@ exports.getSellerProducts = async (query, sellerProfile) => {
   const builtQuery = buildProductQuery(query, {
     sellerId: sellerProfile?.id,
   });
-  const norm = normalizeQuery(builtQuery.queryBuilderResult);
+  const norm = normalizeRequestQuery(query, { sellerId: sellerProfile?.id });
 
   const key = cacheKeyBuilder.sellerProducts(sellerProfile?.id, norm);
 
@@ -112,14 +110,9 @@ exports.getSellerProducts = async (query, sellerProfile) => {
 
 exports.searchProducts = async (query, user) => {
   const built = buildProductQuery(query, user);
-  const norm = normalizeQuery(built.queryBuilderResult);
+  const norm = normalizeRequestQuery(query);
 
   const key = cacheKeyBuilder.products(norm);
-  console.log("cacheKey: ", key);
-  console.log("queryBuilderResult: ", built.queryBuilderResult);
-  console.log("norm: ", norm);
-  console.log("built: ", built);
-  console.log("query: ", query);
 
   return cacheableList({
     cacheKey: key,

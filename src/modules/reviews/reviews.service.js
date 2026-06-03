@@ -3,19 +3,19 @@ const ApiError = require("../../utils/apiError");
 const HttpStatus = require("../../enums/httpStatus.enum");
 const Roles = require("../../enums/roles.enum");
 const { formatPaginatedResponse } = require("../../utils/pagination.util");
-const { normalizeQuery } = require("../../utils/query.util");
+const { normalizeRequestQuery } = require("../../utils/query.util");
 const cacheKeyBuilder = require("../../services/cache/cacheKeys.util");
 const { cacheOrFetch } = require("../../services/cache/cache.helper");
 const { invalidateReviewsCache } = require("../../services/cache/cacheInvalidation.helper");
 
-exports.getProductReviews = async (productId, features) => {
+exports.getProductReviews = async (productId, features, query) => {
   const product = await reviewsRepository.findProductById(productId);
   if (!product) {
     throw new ApiError("Product not found", HttpStatus.NotFound);
   }
 
   const normalized = features.normalize();
-  const normQuery = normalizeQuery(normalized);
+  const normQuery = normalizeRequestQuery(query);
   const cacheKey = cacheKeyBuilder.reviewsProduct(productId, normQuery);
 
   return cacheOrFetch(cacheKey, async () => {

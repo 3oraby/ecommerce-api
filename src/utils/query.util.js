@@ -1,5 +1,4 @@
 exports.normalizeQuery = (queryBuilderResult, customKeys = {}) => {
-  console.log("queryBuilderResult: ", queryBuilderResult);
   const norm = {
     page: queryBuilderResult.pagination?.page || 1,
 
@@ -26,5 +25,18 @@ exports.normalizeQuery = (queryBuilderResult, customKeys = {}) => {
     Object.entries(norm).filter(
       ([_, v]) => v !== null && v !== undefined && v !== "",
     ),
+  );
+};
+
+exports.normalizeRequestQuery = (query = {}, customKeys = {}) => {
+  const norm = {
+    ...query,
+    ...customKeys,
+  };
+
+  return Object.fromEntries(
+    Object.entries(norm)
+      .filter(([_, v]) => v !== null && v !== undefined && v !== "")
+      .sort(([a], [b]) => a.localeCompare(b)),
   );
 };
