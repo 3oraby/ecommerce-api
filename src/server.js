@@ -1,11 +1,15 @@
 const dotenv = require("dotenv");
-dotenv.config();
+dotenv.config({
+  path: `.env.${process.env.NODE_ENV || "development"}`,
+});
 
 const app = require("./app");
 const sequelize = require("./config/sequelize");
 const { connectRedis } = require("./config/redis");
 const queueService = require("./services/queue/queue.service");
-const { startNotificationConsumer } = require("./services/notifications/notification.consumer");
+const {
+  startNotificationConsumer,
+} = require("./services/notifications/notification.consumer");
 
 connectRedis();
 
@@ -14,7 +18,8 @@ sequelize
   .then(() => console.log("DB connection successful"))
   .catch((err) => console.error("Unable to connect to DB:", err));
 
-queueService.connect()
+queueService
+  .connect()
   .then(() => {
     console.log("RabbitMQ connection initialized.");
     return startNotificationConsumer();
