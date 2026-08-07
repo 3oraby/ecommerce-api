@@ -1,4 +1,6 @@
 const dotenv = require("dotenv");
+const logger = require("./logger");
+
 dotenv.config({
   path: `.env.${process.env.NODE_ENV || "development"}`,
 });
@@ -28,7 +30,11 @@ queueService
 
 const port = process.env.PORT || 3000;
 const server = app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  logger.info(`Server running on port ${port}`);
+
+  logger.warn("Redis reconnecting...");
+
+  logger.error("Database connection failed");
 });
 
 const gracefulShutdown = async () => {
