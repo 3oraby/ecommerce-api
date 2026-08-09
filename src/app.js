@@ -38,8 +38,13 @@ const reviewsRouter = require("./modules/reviews/reviews.routes");
 const paymentsRouter = require("./modules/payments/payments.routes");
 const notificationRouter = require("./modules/notification/notification.routes");
 
+const requestLogger = require("./middlewares/requestLogger");
+
 // trust proxy (important if deployed behind nginx / render / railway)
 app.set("trust proxy", 1);
+
+// Request logger
+app.use(requestLogger);
 
 // Enable CORS
 app.use(cors());

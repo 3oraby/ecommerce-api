@@ -3,6 +3,7 @@ const ApiError = require("../utils/apiError");
 const HttpStatus = require("../enums/httpStatus.enum");
 const User = require("../modules/user/user.model");
 const { verifyAccessToken } = require("../modules/auth/token.service");
+const { setRequestContext } = require("../context/requestContext");
 
 const extractTokenFromRequest = (req) => {
   let token;
@@ -58,5 +59,9 @@ exports.authenticate = asyncHandler(async (req, res, next) => {
   }
 
   req.user = user;
+  setRequestContext({
+    userId: user.id,
+  });
+  
   next();
 });

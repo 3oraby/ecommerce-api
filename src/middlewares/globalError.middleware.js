@@ -1,6 +1,7 @@
 const HttpStatus = require("../enums/httpStatus.enum");
 const ApiError = require("../utils/apiError");
 const multer = require("multer");
+const logger = require("../logger");
 
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -11,19 +12,32 @@ const sendErrorDev = (err, res) => {
   });
 };
 
-const sendErrorProd = (err, res) => {
+const sendErrorProd = (err, req, res) => {
   if (err.isOperational) {
-    res.status(err.statusCode).json({
+    logger.error("Operational error", {
+      method: req.method,
+      url: req.originalUrl,
+      statusCode: err.statusCode,
+      stack: err.stack,
+    });
+
+    return res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
-  } else {
-    console.error("ERROR 💥", err);
-    res.status(HttpStatus.InternalServerError).json({
-      status: "Error",
-      message: "Something went very wrong!",
-    });
   }
+
+  logger.error("Unhandled error", {
+    method: req.method,
+    url: req.originalUrl,
+    statusCode: HttpStatus.InternalServerError,
+    stack: err.stack,
+  });
+
+  return res.status(HttpStatus.InternalServerError).json({
+    status: "Error",
+    message: "Something went very wrong!",
+  });
 };
 
 const handleMulterError = (err) => {
@@ -92,7 +106,7 @@ const globalErrorHandler = (err, req, res, next) => {
     if (error.name === "SequelizeDatabaseError")
       error = handleDatabaseError(error);
 
-    return sendErrorProd(error, res);
+    return sendErrorProd(error, req, res);
   }
 
   console.log("Error handling middleware called outside dev/prod environment");
