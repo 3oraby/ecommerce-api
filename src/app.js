@@ -37,6 +37,7 @@ const ordersRouter = require("./modules/orders/orders.routes");
 const reviewsRouter = require("./modules/reviews/reviews.routes");
 const paymentsRouter = require("./modules/payments/payments.routes");
 const notificationRouter = require("./modules/notification/notification.routes");
+const healthRouter = require("./modules/health/health.routes");
 
 const requestLogger = require("./middlewares/requestLogger");
 
@@ -110,6 +111,7 @@ app.use("/api/v1/orders", ordersRouter);
 app.use("/api/v1/reviews", reviewsRouter);
 app.use("/api/v1/payments", paymentsRouter);
 app.use("/api/v1/notifications", notificationRouter);
+app.use("/health", healthRouter);
 
 // Catch all unhandled routes
 app.all(/.*/, urlNotFoundMiddleware);
